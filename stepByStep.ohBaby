@@ -1,0 +1,104 @@
+List-servs are important for digital communities. Their archives are important repositories of a history of digital community. I will be exploring how to take the text based list-serv archive and derive some understanding about the community behind it. I will be using the language python because it leads itself to explanation better than the cursory explorations of list-serv archives I did using bash and regular expressions.
+
+
+The first thing we need to explore is the header of an e-mail. 
+
+From davis at cs.ucsc.edu  Tue Dec  1 01:10:28 2009
+From: davis at cs.ucsc.edu (James Davis)
+Date: Tue, 01 Dec 2009 01:10:28 -0800
+Subject: [liberationtech] Silicon Sweatshops (fwd)
+In-Reply-To: <22730182.1259652770827.JavaMail.root@n26>
+References: <Pine.LNX.4.64.0911302314200.8174@symsyspg.Stanford.EDU>
+	<22730182.1259652770827.JavaMail.root@n26>
+Message-ID: <4B14DD84.8080001@cs.ucsc.edu>
+
+
+
+First we open the file and create a raw text version we can manipulate
+
+>>> f = open("/home/s2e/testing/libtech/mailman.stanford.edu/pipermail/liberationtech/2009-December.txt")
+>>> raw = f.read()
+
+Now we import our regular expressions (magic) to begin to parse the text
+
+>>> import re
+
+Lets find all the chunks of text that match the first line of a message like this "From davis at cs.ucsc.edu  Tue Dec  1 01:10:28 2009". We do this by capturing any text that starts with 'From', has some ammount of other text, and is ended by four didgits.
+
+>>> messages = re.findall('Find.*\d\d\d\d', raw)
+>>> for i in(messages): print(i)
+
+This is a very sloppy regular expression. Lets see if we can firm it up a bit? To do this I have added the match only at the beggining (^) and the end($) of line regular expression charicters. To use these charicters I have to use the MULTILINE flag in my re.findall command.
+
+>>>names = re.findall('^From.* \d\d\d\d$', raw, flags=re.MULTILINE)
+
+We now have the first line of every message. Lets split this into its component parts. To do this we will have to see what is "regular" about our expressions and take advantage of it.
+
+From davis at cs.ucsc.edu  Tue Dec  1 01:10:28 2009
+
+The long form regular format of these e-mails looks like this:
+"From"<space><user name><space>"at"<space><domain name><space><day><space><month><number><space><number><colon><number><colon><number><space><number>
+
+The e-mail address looks like <user name><space>"at"<space><domain name>.
+The date looks like <day><space><month><number><space><number><colon><number><colon><number><space><number>.
+
+For my purposes I care about who sent what, and when they sent it. Because I just need to see the messsages in relation to each other, and don't care about the human readable version of the date I am going to cut that out. To specify the components of the regular expression I want returned to me I surround those expressions in parenthesis ().
+
+
+>>> names = re.findall('^From\s(.*\sat\s.*)\s*([A-Z][a-z]{2}\s[A-Z][a-z]{2}\s\d.*\d{4}$)', raw, flags=re.MULTILINE)
+
+But now we are getting to crazy long regular expressions. This regular expression is technically correct. I like to split mine up into easy to use chunks in order to make my code more readable. 
+
+>>> who = '(.*\sat\s.*)'
+>>> headerFront = '^From\s' + who + '\s*'
+>>> day = '[A-Z][a-z]{2}'
+>>> month = day
+>>> date = '(' + day + '\s' + month + '\s\d.*\d{4}$)'
+>>> topHeader = headerFront + date
+>>> nameNdate = re.findall(topHeader, raw, flags=re.MULTILINE)
+
+Ahhhh, thats better. You will notice that I kept the text captures in the named regular expressions so that I only took the data I wanted. This way I can reuse the who value later when I am parsing through the file.
+
+Since I have the first line parsed the way I want it, now it is time to start grabbing text in relation to that first line. When we were only searching for one line it was nice to have the ability to use ^ and $ to identify the begginging and end of the line. Because we will be working across lines I am going to remove that in order to have . match newlines. To do this I will use the DOTALL flag with re.DOTALL.
+
+First I will replace my ^ and $ chars with \n on the regex I have. 
+
+>>> headerFront = '\nFrom\s' + who + '\s*'
+>>> date = '(' + day + '\s' + month + '\s\d.*\d{4})\n'
+
+now I will change my flags to include dots matching all (hint: you can also use re.S to do the same thing. re.DOTALL is just easier to read)
+
+>>> nameNdate = re.findall(topHeader, raw, flags=re.DOTALL)
+
+EVERYTHING IS RUINED! It captured everything... oh yea, with periods capturing everything there are a bunch of new interesting results. Lets refine our regular expressions to really focus down what we want.
+
+First we will replace periods that we don't want matching new lines with \S which matches all non white-space characters. I am also going to remove the built-in captures so that I can define my captures when I call the function. This will allow me to specify what I want to capture in the future.
+
+>>> who = '\S*\sat\s\S*'
+>>> date = day + '\s' + month + '\s{2}\d*\s\S*?\d{4}$'
+
+With that I can construct a regular expression parser that will let me create a collection that presents me with who a e-mail to a list is from, what date it was sent, and then the contents (including the other header info)
+
+>>> who = '\S*\sat\s\S*'
+>>> headerFront = '^From\s' + who + '\s*'
+>>> capturedFront = >>> headerFront = '^From\s(' + who + ')\s*'
+>>> day = '[A-Z][a-z]{2}'
+>>> month = day
+>>> date = day + '\s' + month + '\s{2}\d*\s\S*?\d{4}$'
+>>> capHeader = capturedFront + '(' date ')'
+>>> dropHeader = headerFront + date
+
+>>>emailList = re.findall(capHeader + '(.*?)' + dropHeader, raw, flags=re.DOTALL)
+
+Now the next step is to capture the rest of the information and put it in a format that is easy to manipulate. To do this we are going to create a dictionary from the parsed data. Since you have a good understanding of Regular Expressions now I will try to only go in-depth when discussing new concepts.
+
+
+
+
+
+For testing purposes I created a small function that I used to test out the work.
+
+
+I created a small one liner to reload my function, create a class object, run the function that grabs the text, and run a test print of my regular expression. It was far easier to do than to go back and recompose my python regular expressions. 
+
+>>> reload(main); a=main.converter(); a.getArchive('testText'); a.printMessage()
