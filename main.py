@@ -5,7 +5,9 @@ def print5():
     print('five')
     
 class converter:
-    raw = ''
+    def __init__(self):
+        self.raw = ''
+
     def getArchive(self, textFile):
         """This function takes the location of the list-serv text file and opens it up for parsing
         """
@@ -15,6 +17,10 @@ class converter:
     
 
     def printMessage(self):
+    	""" This function parses an archive and prints out the results of a generic regular expression. For testing purposes only. Will be converted into a generic dictionary generator that parses the text-file.
+        """ 
+        if self.raw == '':
+            print("Please get a list serv archive and import it file first.")
         who = '\S*\sat\s\S*'
         headerFront = '\nFrom\s' + who + '\s*'
         capturedFront = '\nFrom\s(' + who + ')\s*'
