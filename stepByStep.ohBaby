@@ -14,7 +14,7 @@ Message-ID: <4B14DD84.8080001@cs.ucsc.edu>
 
 
 
-First we open the file and create a raw text version we can manipulate
+Let's open the file and create a raw text version we can manipulate
 
 >>> f = open("/home/s2e/testing/libtech/mailman.stanford.edu/pipermail/liberationtech/2009-December.txt")
 >>> raw = f.read()
@@ -90,15 +90,146 @@ With that I can construct a regular expression parser that will let me create a 
 
 >>>emailList = re.findall(capHeader + '(.*?)' + dropHeader, raw, flags=re.DOTALL)
 
-Now the next step is to capture the rest of the information and put it in a format that is easy to manipulate. To do this we are going to create a dictionary from the parsed data. Since you have a good understanding of Regular Expressions now I will try to only go in-depth when discussing new concepts.
 
+For testing purposes I have taken all of the single lines of text and put them in a set of functions to make it easier to quickly modify and check changes in the code. I decided to wrap all my functions in a class so that I will be able to manipulate multiple listServ files on the command line to ensure that my code does not just run on a single test file.
+<code>
+import re
+class converter:
+    def __init__(self):
+        self.raw = ''
 
+    def getArchive(self, textFile):
+        """This function takes the location of the list-serv text file and opens it up for parsing. Much later I may add the ability to just choose the html address of a list-serv archive. That will be straight up neato!
+        """
+        text = open(textFile)
+        rawText = text.read()
+        self.raw = rawText
+    
 
+    def printMessage(self):
+    	""" This function parses an archive and prints out the results of a generic regular expression. For testing purposes only. Will be converted into a generic dictionary generator that parses the text-file.
+""" 
+	if self.raw == ''
+	   print("Please get a list serv archive and import it file first.")
+        who = '\S*\sat\s\S*'
+        headerFront = '\nFrom\s' + who + '\s*'
+        capturedFront = '\nFrom\s(' + who + ')\s*'
+        day = '[A-Z][a-z]{2}'
+        month = day
+        date = day + '\s' + month + '\s*?\d*?\s\S*?\s\d{4}\n'
+        capHeader = capturedFront + '(' + date + ')'
+        dropHeader = headerFront + date
+#TODO - create captures for all header sections
+#TODO - rewrite the following line to become a dictionary that parses the monthly log and create indiviudal dictionaries of all pertinant header info for each e-mail and includes the content.
+        messageDict = re.findall(capHeader, self.raw, flags=re.DOTALL)
+        print messageDict
+</code>
 
-
-For testing purposes I created a small function that I used to test out the work.
-
-
-I created a small one liner to reload my function, create a class object, run the function that grabs the text, and run a test print of my regular expression. It was far easier to do than to go back and recompose my python regular expressions. 
+Now that I have my quick regular expression parser I can just change the messageDict to examine my progress. I created a small one liner to reload my function, create a class object, run the function that grabs the text, and run a test print of my regular expression.
 
 >>> reload(main); a=main.converter(); a.getArchive('testText'); a.printMessage()
+
+Now the next step is to capture the rest of the information and put it in a format that is easy to manipulate. To do this we are going to create a dictionary from the parsed data. Since you have a good understanding of Regular Expressions now I will try to only go in-depth when discussing new concepts. Here is our header again.
+
+
+From davis at cs.ucsc.edu  Tue Dec  1 01:10:28 2009
+From: davis at cs.ucsc.edu (James Davis)
+Date: Tue, 01 Dec 2009 01:10:28 -0800
+Subject: [liberationtech] Silicon Sweatshops (fwd)
+In-Reply-To: <22730182.1259652770827.JavaMail.root@n26>
+References: <Pine.LNX.4.64.0911302314200.8174@symsyspg.Stanford.EDU>
+	<22730182.1259652770827.JavaMail.root@n26>
+Message-ID: <4B14DD84.8080001@cs.ucsc.edu>
+
+
+I have repeated a list-serv header above to remind you what it looks like. At first glance it looks easy enough to parse out the contents of the header using a sreies of regular expressions for each line such as this.
+
+>>> whom = 'From\:\s(.*?)\n'
+>>> date = 'Date\:\s(.*?)\n'
+>>> subject = 'Subject\:\s(.*?)\n'
+>>> inReply = 'In\-Reply\-To\:\s(.*?)\n'
+>>> refrences = 'Refrences\:\s(.*?)\n'
+>>> messageID = 'Message\-ID\:\s(.*?)\n'
+>>> headerChunks = from + date + subject + inReply + refrences + messageID
+>>> messageDict = re.findall(headerChunks, self.raw, flags=re.DOTALL)
+
+This won't get all the data. Even worse, it will be all sorts of slow. In fact, I did that set of regular expressions just for your benefit. Not saying that you owe me or anything. I am just saying. So, why won't that work? Think back to your past e-mails, look at our example header, and think about what re.findall does and returns. It is not because I am not grabbing the surrounding text. If you figured out that not every message in in reply to somthing you were right on. The first e-mail in a archive will not have this section. Refrences are the same way. So, we have to come up with a better way to deal with these cases. 
+
+Since we know that a header will always have our archive specific front matter, which is repeated in the header, and a message ID we can safely identify the bounds of the header and grab just it. 
+
+>>> headerFront = '\nFrom\s' + who + '\s*'
+>>> day = '[A-Z][a-z]{2}'
+>>> month = day
+>>> date = day + '\s' + month + '\s*?\d*?\s\S*?\s\d{4}\n'
+>>> dropTop = headerFront + date
+>>> getHeader = '(.*?Message\-ID\:\s.*?\n)'
+>>> messageDict = re.findall(dropTop + getHeader, self.raw, flags=re.DOTALL)
+
+
+Now we have a function that only grabs the header of an e-mail from a list-serv. But, notice how we are dropping the archive specific front matter. Well, lets use that and pythons regular expression "split" function to parse our e-mails out a bit further. 
+
+<code>
+        splitText = re.split(dropTop, self.raw)
+</code>
+
+Using the split function we have creates a list of e-mails. This is the obviousl better way to do things. That is, of course, unless somone has the nerve to copy and paste a list-serv message into the text of an e-mail. If that happened, the e-mail would be split up. For instance, if I pasted the text of this article into an e-mail it would probobly match a whole bunch of stuff that it is not supposed to and, therefore, cut it into ribbons and ruin my data. Just warning you. 
+
+
+The next step will be to fully parse the headers of a message. Remember when I made you feel all bad about how much extra work I did just to show you what thoseregular expressions for each line would look like. That was a lie. I am going to use those right now. Let that be a lesson to you. Humans are mischevous little devils and should not be trusted. But, on to the lesson. Now that we have split apart our e-mails we can easily pass them to a function that identifies the header sections and splits them apart. In order to make the next section easier, i am also going to use this function to create a dictionary out of split up components.
+
+<code>
+    def dictify(self, email):
+        #get headers from email
+        getHeader = '(.*?Message\-ID\:\s.*?\n)'
+        msgDict = {}
+        msg = re.findall(getHeader + '(.*)', email, flags=re.DOTALL)
+        #create a dictionary item for body text
+        for i in msg:
+            msgDict['body'] = i[1]
+        # Setting header specific regEx's
+        whom = 'From\:\s(.*?)\n'
+        date = 'Date\:\s(.*?)\n'
+        subject = 'Subject\:\s(.*?)\n'
+        inReply = 'In\-Reply\-To\:\s(.*?)\n'
+        references = 'References\:\s(.*?)\nMessage\-ID\:'
+        messageID = 'Message\-ID\:\s(.*?)\n'
+
+        #create a dictionary item for the header items that are always there.
+        msgDict['From'] = re.findall(whom, email, flags=re.DOTALL)
+        msgDict['Date'] = re.findall(date, email, flags=re.DOTALL)
+        msgDict['Subject'] = re.findall(subject, email, flags=re.DOTALL)
+        msgDict['ID'] = re.findall(messageID, email, flags=re.DOTALL)
+
+        #create checks for items that may not be there.
+        if re.search(references, email, flags=re.DOTALL) != 'none':
+            msgDict['References'] = re.findall(references, email, flags=re.DOTALL)
+        if re.search(inReply, email, flags=re.DOTALL) != 'none':
+            msgDict['Reply'] = re.findall(inReply, email, flags=re.DOTALL)
+	#split up refrences into a list within its dict item for easy parsing later
+        if msgDict['References'] != []:
+            msgDict['References'] = re.split('\s*|\n\t', msgDict['References'][0])
+
+	#remember we are just printing out sections to check for consistancy. I created a simple 'Refrences' to ID printout here to look at how a reply links to the refrences before it.
+        print("--------------------------")
+        print("=======NEW EMAIL=========")
+        print("--------------------------")
+        print("==========ID==============")
+        print(msgDict['ID'])
+        print("==========Reply To==============")
+        print(msgDict['Reply'])
+        print("=========Refrences==========")
+        print(msgDict['References'])
+</code>
+
+
+
+['Body': ["ALLL SORTS OF BODY TEXT"],
+ 'From': ['bishop at designafternext.com (Bishop Zareh)'],
+ 'Refrences': ['<50E0B2B7.7010304@entersection.org>'],
+ 'Date': ['Mon, 31 Dec 2012 18:09:37 -0600'],
+ 'Reply': ['<50E0B2B7.7010304@entersection.org>'],
+ 'ID': ['<07080613-2615-4B02-BD9D-8024FD1CD62E@designafternext.com>', '<50E0B2B7.7010304@entersection.org>'],
+ 'Subject': ["[liberationtech] Jacob Appelbaum's 29C3 keynote"]
+
+
+Well, that is it for parsing the e-mail headers. In the next piece I will go in more depth about how we parse the body text to make it easier to connect in-line responses to their initial message and how we refactor our hacked up code to better expose our list-serv parsers API for content analysis.  
