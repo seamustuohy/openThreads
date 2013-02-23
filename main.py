@@ -1,4 +1,5 @@
 import re
+import time
 print("Main Parser Function Reloaded")
 
 def print5():
@@ -7,6 +8,7 @@ def print5():
 class converter:
     def __init__(self):
         self.raw = ''
+        self.messages = []
 
     def getArchive(self, textFile):
         """This function takes the location of the list-serv text file and opens it up for parsing
@@ -67,18 +69,25 @@ class converter:
        # print(msgDict['References'])
         if msgDict['References'] != []:
             msgDict['References'] = re.split('\s*|\n\t', msgDict['References'][0])
-        print("--------------------------")
-        print("=======NEW EMAIL=========")
-        print("--------------------------")
-        print("==========ID==============")
-        print(msgDict['ID'])
-        print("==========Reply To==============")
-        print(msgDict['Reply'])
-        print("=========Refrences==========")
-        print(msgDict['References'])
 
+        #Body Parsing
+        beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
+        endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
+        PGP = beginPGP + '(.*?)' + endPGP
+        scrubbed = '\-{14}\s[a-z]{4}\s[a-z]{4}\s\-{14}'
+        grabScrubbed = scrubbed + '(.*)'
+        replyName = 'On\s(.*?)wrote\:'
+        test = re.findall(PGP, msgDict['body'], flags=re.DOTALL)
 
-  
+        #take all we have parsed in a message and append it to the main messages que
+        self.messages.append(msgDict)
+
+        #lets look at what we have appended.
+        print(self.messages[len(self.messages)-1]['From'])
+
+        #its hard to make sure things are working right without time to inspect the output
+        time.sleep(1)
+        
     def getMessages(self):
         """This function takes a raw text version of a list-serv archive and converts it into a parsable dictionary... possibly in JSON format. Yea, we will do JSON formatting because the internets love them some JSON
         """

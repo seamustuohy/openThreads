@@ -232,4 +232,79 @@ The next step will be to fully parse the headers of a message. Remember when I m
  'Subject': ["[liberationtech] Jacob Appelbaum's 29C3 keynote"]
 
 
-Well, that is it for parsing the e-mail headers. In the next piece I will go in more depth about how we parse the body text to make it easier to connect in-line responses to their initial message and how we refactor our hacked up code to better expose our list-serv parsers API for content analysis.  
+Well, that is it for parsing the e-mail headers. In the next piece I will go in more depth about how we parse the body text to make it easier to connect in-line responses to their initial message and how we refactor our hacked up code to better expose our list-serv parsers API for content analysis.
+
+
+Lets look at the "regular" parts of a body message:
+
+First lets start with PGP signatures. Below is a PGP signature I pulled from Lib tech. (I changed a few chars to make it gibberish.) 
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.10 (GNU/Linux)
+
+iQEcBAEBAgAGBQJ9bCs0AAoJEBEET9GfxSfMgKEH/1rGH6GNm0DpPO6lnFJnTBvH
+kEnNSjU3b5BuYIw39wYfG3GE3sOsFuTnt0/KMWGB9M+-XqpNo08Yt3HXUfv2Lii0
+eIm9JOLb1/CfmnCyenVgkYKs2vORQmolAMSu+pqxuY1hb4GwffRG+uY5wu6jA4fc
+CpdQz8ylPmoEfptbIpAhvu52t2QAPcOvHKSs3xA4hafeDLXG7mebmG7Rbft+gs9G
+v8w4NMxrXiKoB/v7kR7ZOO7Jr1uRLUMn6prhVS+99v46dPyxGZDjiXO+VRohC2DG
+LsqkgyhdGY8a1FXVeUAKVc0YTud4I1E1d135TqqpE9DsFmh/QgEP2QSk/XZl1zg=
+=bWOj
+-----END PGP SIGNATURE-----
+
+Using the regular expression tools I have described earlier I first created a redular expression that could capture the header and footer.
+
+beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
+endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
+
+Since this is a static statement I could have simply typed out the whole statement in the regular expression with proper escaping of the -'s. That would be less fun though. Once I have my capture for the pgp header and footer I simply captured all that was between them.
+
+PGP = beginPGP + '(.*?)' + endPGP
+
+You can check the results using this simple test.
+
+test = re.findall(PGP, msgDict['body'], flags=re.DOTALL)
+
+Scrubbed attachements work the same way.
+
+-------------- next part --------------
+
+scrubbed = '\-{14}\s[a-z]{4}\s[a-z]{4}\s\-{14}'
+grabScrubbed = scrubbed + '(.*)'
+
+Since scrubbed attachements are always the last bit of data on the message I have allowed my wildcard to be as greedy as it wants.
+
+Finally we are moving to more complex parsing, capturing reply's. Reply's have a consitant format of using increasing >'s as a way of specifying how many e-mails ago the text came from. a line starting with one > signifies the last messages text. Two >> signifies that that text is a reply to another reply. Three >> is a reply, to a reply, to a reply, and so on.  Below are some examples.
+
+In-Line replys:
+On 10/6/12 10:36 PM, Collin Anderson wrote:
+> It'll also be really useful to know of 'piratepad' type platforms
+> that are secure, and there's controls over deleting the
+> collaborative pads/docs.
+
+
+Nested In-Line replys:
+On 10/6/12 10:36 PM, Collin Anderson wrote:
+> On Sat, Oct 6, 2012 at 4:45 PM, Fabio Pietrosanti (naif) <
+> lists at infosecurity.ch> wrote:
+> Hello,
+>> If you're looking to use it all the time (eg with your class, group,
+>> organization), then it might be worthwhile to host your own [1].
+> I advise against it. While many groups started to do that only few
+> services are left operational. Most servers went down to their knews.
+
+
+Notice that the reply header is determinant on the mail client that sends it.
+
+On Oct 5, 2012, at 7:02 AM, Katy P <katycarvt at gmail.com> wrote:
+On 10/6/12 10:36 PM, Collin Anderson wrote:
+On Sat, Oct 6, 2012 at 4:45 PM, Fabio Pietrosanti (naif) <lists at infosecurity.ch> wrote:
+
+But, the basic structure starting with 'On' and ending with 'wrote:' allows us to capture this data in case we want to play with it later.
+
+replyName = 'On\s(.*?)wrote\:'
+
+Finally we get to the meat of the reply's.
+
+
+
+
