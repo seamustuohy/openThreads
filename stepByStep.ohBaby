@@ -303,7 +303,7 @@ But, the basic structure starting with 'On' and ending with 'wrote:' allows us t
 
 replyName = 'On\s(.*?)wrote\:'
 
-Finally we get to the meat of the reply's.
+Ok, I just talked with my co-conspiritors and it looks like I actually have to give them some working list-serv's to analize. So, we are going to take a really quick journey into json. People love JSON, I don't use it in any of my current projects, but I hear people rave abour it. As such, I implemented a JSON function that saves the dictionary to a JSON file. It simply accepts a command and a file name. If the command is save, it saves a JSON file with the corresponding filename. If the command is open, well it will open a file of the corresponding name 
 
 
 
