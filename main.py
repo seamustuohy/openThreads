@@ -169,12 +169,12 @@ class converter:
         '''A function that takes a message ID and looks at what kind of response people receive on their first post. This collects the ammount of replies to an individuals first post on a listserv and returns the message id of all responses as well as the ammount of messages a individual user posts to a listserv after their first thread. '''
 
     #Grabs the identified message from the main message structure
-    message = ''
-    for i in self.messages:
-        if i['ID'] = ID:
-            message = i
-    if message == '':
-        return "no message found"
+        message = ''
+        for i in self.messages:
+            if i['ID'] == ID:
+                message = i
+        if message == '':
+            return 'no message found, are you sure that code is correct?'
     
     #Gather replies and append them to the message structure
         replies = replies(message['ID'])
@@ -195,8 +195,15 @@ class converter:
     
 
     def totalMessages(self, name):
-        '''This function takes a users name and returns the ID's of all their messages on a mailing list.'''
-        #need to write this
+        '''This function takes a users name and returns the ID's of all their messages on a mailing list and the total number.'''
+        userTotal = 0
+        userMsgs = []
+        for i in self.messages: 
+            if i['Name'] == name:
+                userTotal += 1
+                userMsgs.append(i['ID'])
+        return userTotal, userMsgs
+
         
     def replies(self, ID):
         '''This function takes a message ID and returns a list of all the messages that replied to the identified message.''' 
