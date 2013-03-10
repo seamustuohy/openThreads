@@ -185,14 +185,10 @@ class converter:
         message['repNum'] = repNum
             
     #gather the ammount of total messages a user has sent
-        totalMessages = totalMessages(message['Name'])
-        totalCount = 0
-        for i in totalMessages:
-            totalCount += 1
+        totalCount, totalMsgIDs = totalMessages(message['Name'])
         message['totalMessages'] = totalCount
 
     #need to send this data somwhere
-    
 
     def totalMessages(self, name):
         '''This function takes a users name and returns the ID's of all their messages on a mailing list and the total number.'''
@@ -205,9 +201,26 @@ class converter:
         return userTotal, userMsgs
 
         
+    def reference(self, ID):
+        '''This function takes a message ID and returns a list of all the messages that replied to the identified message.''' 
+        refTotal = 0
+        references = []
+        for i in self.messages: 
+            if ID in i['References']:
+                refTotal += 1
+                references.append(i)
+        return refTotal, references
+
     def replies(self, ID):
         '''This function takes a message ID and returns a list of all the messages that replied to the identified message.''' 
-        #need to write this
+        replies = []
+        repTotal = 0
+        for i in self.messages: 
+            if ID in i['Reply']:
+                repTotal += 1
+                replies.append(i)
+        return repTotal, replies
+
 
         
 def runTest(b):
