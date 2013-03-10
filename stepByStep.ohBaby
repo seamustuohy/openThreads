@@ -1,5 +1,6 @@
 List-servs are important for digital communities. Their archives are important repositories of a history of digital community. I will be exploring how to take the text based list-serv archive and derive some understanding about the community behind it. I will be using the language python because it leads itself to explanation better than the cursory explorations of list-serv archives I did using bash and regular expressions.
 
+Before we start we need to get some test data. For this I used the command line tool wget. The command I used was "wget -r -A.txt URL_GOES_HERE" This recursively grabs all files with the file extension listed behind the A from the url specified. Since I was pulling the text files from a mailman archive I just put in the mailman address and let it grab me all the text.  
 
 The first thing we need to explore is the header of an e-mail. 
 
@@ -304,6 +305,7 @@ But, the basic structure starting with 'On' and ending with 'wrote:' allows us t
 replyName = 'On\s(.*?)wrote\:'
 
 Ok, I just talked with my co-conspiritors and it looks like I actually have to give them some working list-serv's to analize. So, we are going to take a really quick journey into json. People love JSON, I don't use it in any of my current projects, but I hear people rave abour it. As such, I implemented a JSON function that saves the dictionary to a JSON file. It simply accepts a command and a file name. If the command is save, it saves a JSON file with the corresponding filename. If the command is open, well it will open a file of the corresponding name 
+
 
 
 

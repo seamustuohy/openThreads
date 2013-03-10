@@ -52,7 +52,7 @@ class converter:
             msgDict['body'] = i[1]
         # Setting header specific regEx's
         whom = 'From\:\s(.*?)\n'
-        date = 'Date\:\s(.*?)\n'
+        date = 'Date\:\s*?(.*?)\n'
         dWrd = '[A-Z][a-z]{2}'
         subject = 'Subject\:\s(.*?)\n'
         inReply = 'In\-Reply\-To\:\s(.*?)\n'
@@ -109,7 +109,7 @@ class converter:
     def compactDate(self, dateCheck):
         second, minute, hour, day, month, year = 0,0,0,0,0,0
         dWrd = '[A-Z][a-z]{2}'
-        compDateDict = ''+dWrd+',\s(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})\:(\d{2})'
+        compDateDict = ''+dWrd+',\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})\:(\d{2})'
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         compactTup = re.findall(compDateDict, self.checkReg(dateCheck))
         for i in [i for i,x in enumerate(months) if x == compactTup[0][1]]:
@@ -177,18 +177,12 @@ class converter:
             return 'no message found, are you sure that code is correct?'
     
     #Gather replies and append them to the message structure
-        replies = replies(message['ID'])
-        repNum = 0
-        for i in replies:
-            repNum += 1
-            message['replies'].append(i['ID'])
-        message['repNum'] = repNum
-            
+        message['repNum'], message['replies'] = self.replies(message['ID'])
+        
     #gather the ammount of total messages a user has sent
-        totalCount, totalMsgIDs = totalMessages(message['Name'])
-        message['totalMessages'] = totalCount
+        message['totalCount'], totalMsgId = self.totalMessages(message['Name'])
 
-    #need to send this data somwhere
+        print(message['Name'], "total messages by user:" + str(message['totalCount']), "number of replies to this message:" + str(message['repNum']))
 
     def totalMessages(self, name):
         '''This function takes a users name and returns the ID's of all their messages on a mailing list and the total number.'''
@@ -202,7 +196,7 @@ class converter:
 
         
     def reference(self, ID):
-        '''This function takes a message ID and returns a list of all the messages that replied to the identified message.''' 
+        '''This function takes a message ID and returns a list of all the messages that are on the thread of the identified message.''' 
         refTotal = 0
         references = []
         for i in self.messages: 
@@ -215,14 +209,24 @@ class converter:
         '''This function takes a message ID and returns a list of all the messages that replied to the identified message.''' 
         replies = []
         repTotal = 0
-        for i in self.messages: 
+        for i in self.messages:
             if ID in i['Reply']:
                 repTotal += 1
                 replies.append(i)
         return repTotal, replies
 
-
-        
+    def onlyTheBest(self):
+        '''This was a small function I created to see who the most common posters are... this is NOT a useful function for gaining a top posting list as once the highest poster is found he overshadows any other posters.''' 
+        first = self.firstPost()
+        curBest = 2
+        for h,k in first.iteritems():
+            total, tossIDs = self.totalMessages(k['Name'])
+            if total > curBest:
+                curBest = total
+                print(k['Name'], curBest)
+                time.sleep(.1)                   
+                
+    
 def runTest(b):
     #needs to mimic the below... it does not currently.
     #reload(main); a=main.converter(); a.getArchive('testtext'); a.defRegular('mailman'); a.firstPost()
