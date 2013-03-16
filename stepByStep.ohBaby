@@ -308,5 +308,60 @@ Ok, I just talked with my co-conspiritors and it looks like I actually have to g
 
 
 
+===============================================================================================
+
+So, we have genrated an initial list of questions. Let's take these questions one by one.
+
+If a question has a function name next to it, it can be called from the python command line using that function like this (all caps to be replaced by what they describe):
+
+>>> reload(main); a=main.converter(); a.getArchive('LIST_SERV_TEXT'); a.defRegular('mailman'); a.FUNCTIONNAME()
+
+The line above both calls the python code, sets it as an object, grabs the archive, creates a set of messages, and runs a function against them.
+
+=====================================================================
+
+General Stats
+How many posts/per person = postsPer() "returns list of tuples (name, total posts)
+How many new posts = newMessages() "returns ID"
+how many responses = allRefs() - "returns ID"
+posts without re: or ref = noResponses() - "returns ID"
+How many active members (active = at least 1 post)
+
+Welcome 
+Frequency of “pleasantries”
+e.g. “hello” “thank you” - signing names?
+hey, hi, hello, thank you, thanks, cheers
+Authorship/gender breakdown of pleasantries
+
+Search for Knowledge - all of this needs to be done by hand... YEA!
+Who asks questions?
+Who answers questions?
+
+
+Participation: what does it mean to participate?
+Starting
+Membership
+What is the gender breakdown are members?
+What is the gender breakdown of posting vs. lurking?
+
+Leadership --needs to be done by hand from top lists of posters = topPosters()
+What is the gender breakdown of top posters?
+Who is the leading female voice?
+How much do leaders generate new posts or respond to existing posts?
+
+Timing
+If we estimate that every 100 words take 30 seconds, how much time are people spending on mailist list?
+What is the gender breakdown of time commitment?
+When are most posts posted? (time of day)
+
+
+Collaboration: how do people work together?
+Exchange
+What is the length of time / thread?
+How long does a thread stay alive?
+Gender breakdown of participants?
+
+Missed Connections
+Who are the single posters that never post again? = missedConnections()
 
 

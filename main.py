@@ -55,9 +55,9 @@ class converter:
         date = 'Date\:\s*?(.*?)\n'
         dWrd = '[A-Z][a-z]{2}'
         subject = 'Subject\:\s(.*?)\n'
-        inReply = 'In\-Reply\-To\:\s(.*?)\n'
-        references = 'References\:\s(.*?)\nMessage\-ID\:'
-        messageID = 'Message\-ID\:\s(.*?)\n'
+        inReply = 'In\-Reply\-To\:\s*?(.*?)\n'
+        references = 'References\:\s*?(.*?)\nMessage\-ID\:'
+        messageID = 'Message\-ID\:\s*?(.*?)\n'
         name = '\((.*)\)'
         #Tue, 8 Nov 2011 11:58:09 -0800 (PST)
         
@@ -78,7 +78,6 @@ class converter:
         IDCheck = re.findall(messageID, email, flags=re.DOTALL)
         if IDCheck:
             msgDict['ID'] = self.checkReg(IDCheck)
-
         #create checks for items that may not be there.
         if re.search(references, email, flags=re.DOTALL) != 'none':
             msgDict['References'] = re.findall(references, email, flags=re.DOTALL)
@@ -193,7 +192,6 @@ class converter:
                 userTotal += 1
                 userMsgs.append(i['ID'])
         return userTotal, userMsgs
-
         
     def reference(self, ID):
         '''This function takes a message ID and returns a list of all the messages that are on the thread of the identified message.''' 
@@ -216,7 +214,7 @@ class converter:
         return repTotal, replies
 
     def onlyTheBest(self):
-        '''This was a small function I created to see who the most common posters are... this is NOT a useful function for gaining a top posting list as once the highest poster is found he overshadows any other posters.''' 
+        '''This was a small function I created to see who the most common posters are... this is NOT a useful function for gaining a top posting list as once the highest poster is found ze overshadows any other posters.''' 
         first = self.firstPost()
         curBest = 2
         for h,k in first.iteritems():
@@ -224,9 +222,84 @@ class converter:
             if total > curBest:
                 curBest = total
                 print(k['Name'], curBest)
-                time.sleep(.1)                   
-                
+                time.sleep(.1)
+
+    def postsPer(self):
+        first = self.firstPost()
+        postNum = []
+        for h,k in first.iteritems():
+            total, ID = self.totalMessages(k['Name'])
+            postNum.append((k['Name'], total))
+        return postNum
+
+    def topPosters(self):
+        """Returns the top 25 posters"""
+        postnum = self.postsPer()
+        sortedPost = sorted(postnum, key=self.sortTop)
+        check = 1
+        top = []
+        while check <= 25:
+            if sortedPost[-check]:
+                top.append(sortedPost[-check])
+            check += 1
+        return top
+
+    def sortTop(self, a):
+        """Used in top function for sorting the tuples"""
+        return a[1]
+
+    def missedConnections(self):
+        postNum = self.postsPer()
+        missed = []
+        for i in postNum:
+            if i[1] == 1:
+                missed.append(i[0])
+        return missed
+        
+    def newMessages(self):
+        """returns the ID of messages that are never responded to"""
+        newMessages = []
+        for i in self.messages:
+            if i['Reply'] == []:
+                newMessages.append(i['ID'])
+        return newMessages
+
+    def noResponse(self):
+        """return the ID of all posts that are never responded to"""
+        newMsg = self.newMessages()
+        for i in self.messages:
+            #NOTE: many items are lists in self.messages and must be pulled out of the list to play with
+            if i['Reply'] != [] and i['Reply'][0] in newMsg:
+                newMsg.remove(i['Reply'][0])
+        return newMsg
     
+    
+    def allreplys(self):
+        """returns the ID of all replies (these may also reference other messages, be warned about that"""
+        repMessages = []
+        for i in self.messages:
+            if i['Reply'] != []:
+                repMessages.append(i['ID'])
+        return repMessages
+
+    def allrefs(self):
+        '''returns the ID of messages that reference another message'''
+        refMessages = []
+        for i in self.messages:
+            if i['References'] != []:
+                refMessages.append(i['ID'])
+        return refMessages
+
+    def checkIt(self):
+        """ a checker function that I wrote to explore other functions"""
+        #change the following variable to check a list
+        no = self.noResponse()
+        for i in self.messages:
+            if i['ID'] in no:
+                print(i['Name'], i['Subject'])
+
+
+                
 def runTest(b):
     #needs to mimic the below... it does not currently.
     #reload(main); a=main.converter(); a.getArchive('testtext'); a.defRegular('mailman'); a.firstPost()
