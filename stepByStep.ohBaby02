@@ -1,0 +1,128 @@
+
+
+Lets look at the "regular" parts of a body message:
+
+First lets start with PGP signatures. Below is a PGP signature I pulled from Lib tech. (Don't worry, its a gibberish signature I made)
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.10 (GNU/Linux)
+
+iQEcBAEBAgAGBQJ9bCs0AAoJEBEET9GfxSfMgKEH/1rGH6GNm0eeDpPO6lnFJnTBvH
+kEnNSjU323fds55Iw39wYfG3GE3sOsFuTnt0/KMWGB9M+-XqpNo08Yt3HXUfv2Lii0
+eIm9JOLb1/CfmnCyenVgkYKs2vORQmolAMSu+pqxuY1h23f3GwffRG+uY5wu6jA4fc
+CpdQz8ylPmoEfptbIpAhvu52t2QAPcOvHKSs3xA4hafeDLXfse7mebmG7Rbft+gs9G
+v8w4NMxrXiKoB/v7kR7ZOO7Jr1uRLUMn6prhVS+99v46dPyxGZDjdsiXO+VRohC2DG
+LsqkgyhdGY8a1FXVeUAKVc0YTud4I1E1d135TqqpE9DsFmh/QgEP2QdfSk/XZl1zg=
+=bWOj
+-----END PGP SIGNATURE-----
+
+Using the regular expression tools I have described earlier I first created a redular expression that could capture the header and footer.
+
+beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
+endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
+
+Since this is a static statement I could have simply typed out the whole statement in the regular expression with proper escaping of the -'s. That would be less fun though. Once I have my capture for the pgp header and footer I simply captured all that was between them.
+
+PGP = beginPGP + '(.*?)' + endPGP
+
+You can check the results using this simple test.
+
+test = re.findall(PGP, msgDict['body'], flags=re.DOTALL)
+
+Scrubbed attachements work the same way.
+
+-------------- next part --------------
+
+scrubbed = '\-{14}\s[a-z]{4}\s[a-z]{4}\s\-{14}'
+grabScrubbed = scrubbed + '(.*)'
+
+Since scrubbed attachements are always the last bit of data on the message I have allowed my wildcard to be as greedy as it wants.
+
+Finally we are moving to more complex parsing, capturing reply's. Reply's have a consitant format of using increasing >'s as a way of specifying how many e-mails ago the text came from. a line starting with one > signifies the last messages text. Two >> signifies that that text is a reply to another reply. Three >> is a reply, to a reply, to a reply, and so on.  Below are some examples.
+
+In-Line replys:
+On 10/3/02 10:36 PM, Bob Jones wrote:
+> Four score and server years ago, our fathers brought forth twice a
+> couple patriarchs whose mothers husbands did once more than a few give
+> data to the people.
+
+Nested In-Line replys:
+On 10/3/02 10:36 PM, Bob Jones wrote:
+> Four score and server years ago, our fathers brought forth twice a
+> couple patriarchs whose mothers husbands did once more than a few give
+> data to the people.
+>> This is complete gibberish. What is wrong with you. We all know that it
+>> was five score, not four score. This is why I stopped using wikipedia
+>> and started asking all important queries on /b
+
+Notice that the reply header is determinant on the mail client that sends it.
+
+On Oct 6, 2012, at 2:02 AM, Sarah P <theMonster at mailisgood.com> wrote:
+On 10/10/10 10:10 PM, Denary Tennenbaum wrote:
+On Sat, Oct 2, 2042 at 4:45 PM, Ed Sullivan (Sully) <lists at deadpeopleinthefuture.ch> wrote:
+
+But, the basic structure starting with 'On' and ending with 'wrote:' allows us to capture this data in case we want to play with it later.
+
+replyName = 'On\s(.*?)wrote\:'
+
+Ok, I just talked with my co-conspiritors and it looks like I actually have to give them some working list-serv's to analize. So, we are going to take a really quick journey into json. People love JSON, I don't use it in any of my current projects, but I hear people rave abour it. As such, I implemented a JSON function that saves the dictionary to a JSON file. It simply accepts a command and a file name. If the command is save, it saves a JSON file with the corresponding filename. If the command is open, well it will open a file of the corresponding name 
+
+
+
+===============================================================================================
+
+So, we have genrated an initial list of questions. Let's take these questions one by one.
+
+If a question has a function name next to it, it can be called from the python command line using that function like this (all caps to be replaced by what they describe):
+
+>>> reload(main); a=main.converter(); a.getArchive('LIST_SERV_TEXT'); a.defRegular('mailman'); a.FUNCTIONNAME()
+
+The line above both calls the python code, sets it as an object, grabs the archive, creates a set of messages, and runs a function against them.
+
+=====================================================================
+
+General Stats
+How many posts/per person = postsPer() "returns list of tuples (name, total posts)
+How many new posts = newMessages() "returns ID"
+how many responses = allRefs() - "returns ID"
+posts without re: or ref = noResponses() - "returns ID"
+How many active members (active = at least 1 post)
+
+Welcome 
+Frequency of “pleasantries”
+e.g. “hello” “thank you” - signing names?
+hey, hi, hello, thank you, thanks, cheers
+Authorship/gender breakdown of pleasantries
+
+Search for Knowledge - all of this needs to be done by hand... YEA!
+Who asks questions?
+Who answers questions?
+
+
+Participation: what does it mean to participate?
+Starting
+Membership
+What is the gender breakdown are members?
+What is the gender breakdown of posting vs. lurking?
+
+Leadership --needs to be done by hand from top lists of posters = topPosters()
+What is the gender breakdown of top posters?
+Who is the leading female voice?
+How much do leaders generate new posts or respond to existing posts?
+
+Timing
+If we estimate that every 100 words take 30 seconds, how much time are people spending on mailist list?
+What is the gender breakdown of time commitment?
+When are most posts posted? (time of day)
+
+
+Collaboration: how do people work together?
+Exchange
+What is the length of time / thread?
+How long does a thread stay alive?
+Gender breakdown of participants?
+
+Missed Connections
+Who are the single posters that never post again? = missedConnections()
+
+
