@@ -4,20 +4,20 @@ Before we start we need to get some test data. For this I used the command line 
 
 The first thing we need to explore is the header of an e-mail. 
 
-From davis at cs.ucsc.edu  Tue Dec  1 01:10:28 2009
-From: davis at cs.ucsc.edu (James Davis)
-Date: Tue, 01 Dec 2009 01:10:28 -0800
-Subject: [liberationtech] Silicon Sweatshops (fwd)
-In-Reply-To: <22730182.1259652770827.JavaMail.root@n26>
-References: <Pine.LNX.4.64.0911302314200.8174@symsyspg.Stanford.EDU>
-	<22730182.1259652770827.JavaMail.root@n26>
-Message-ID: <4B14DD84.8080001@cs.ucsc.edu>
+From person at site.blank.edu  Tue Dec  1 01:10:28 2009
+From: person at site.blank.edu (bob smith)
+Date: Tue, 12 Dec 2002 11:20:28 -0540
+Subject: [ListServ] I am a subject line 
+In-Reply-To: <22234182.1259452773827.someMail.rooted@g56>
+References: <Pine.LNX.4.64.09555432314200.8174@someServer.Stanford.EDU>
+	<22234182.1259452773827.someMail.rooted@g56>
+Message-ID: <4B14DFF4.8080322G01@site.blank.edu>
 
 
 
 Let's open the file and create a raw text version we can manipulate
 
->>> f = open("/home/s2e/testing/libtech/mailman.stanford.edu/pipermail/liberationtech/2009-December.txt")
+>>> f = open("/home/name/libtech/mailman.stanford.edu/pipermail/liberationtech/2009-December.txt")
 >>> raw = f.read()
 
 Now we import our regular expressions (magic) to begin to parse the text
@@ -35,7 +35,7 @@ This is a very sloppy regular expression. Lets see if we can firm it up a bit? T
 
 We now have the first line of every message. Lets split this into its component parts. To do this we will have to see what is "regular" about our expressions and take advantage of it.
 
-From davis at cs.ucsc.edu  Tue Dec  1 01:10:28 2009
+From person at site.blank.edu  Tue Dec  1 01:10:28 2009
 
 The long form regular format of these e-mails looks like this:
 "From"<space><user name><space>"at"<space><domain name><space><day><space><month><number><space><number><colon><number><colon><number><space><number>
@@ -132,15 +132,14 @@ Now that I have my quick regular expression parser I can just change the message
 
 Now the next step is to capture the rest of the information and put it in a format that is easy to manipulate. To do this we are going to create a dictionary from the parsed data. Since you have a good understanding of Regular Expressions now I will try to only go in-depth when discussing new concepts. Here is our header again.
 
-
-From davis at cs.ucsc.edu  Tue Dec  1 01:10:28 2009
-From: davis at cs.ucsc.edu (James Davis)
-Date: Tue, 01 Dec 2009 01:10:28 -0800
-Subject: [liberationtech] Silicon Sweatshops (fwd)
-In-Reply-To: <22730182.1259652770827.JavaMail.root@n26>
-References: <Pine.LNX.4.64.0911302314200.8174@symsyspg.Stanford.EDU>
-	<22730182.1259652770827.JavaMail.root@n26>
-Message-ID: <4B14DD84.8080001@cs.ucsc.edu>
+From person at site.blank.edu  Tue Dec  1 01:10:28 2009
+From: person at site.blank.edu (bob smith)
+Date: Tue, 12 Dec 2002 11:20:28 -0540
+Subject: [ListServ] I am a subject line 
+In-Reply-To: <22234182.1259452773827.someMail.rooted@g56>
+References: <Pine.LNX.4.64.09555432314200.8174@someServer.Stanford.EDU>
+	<22234182.1259452773827.someMail.rooted@g56>
+Message-ID: <4B14DFF4.8080322G01@site.blank.edu>
 
 
 I have repeated a list-serv header above to remind you what it looks like. At first glance it looks easy enough to parse out the contents of the header using a sreies of regular expressions for each line such as this.
@@ -225,12 +224,12 @@ The next step will be to fully parse the headers of a message. Remember when I m
 
 
 ['Body': ["ALLL SORTS OF BODY TEXT"],
- 'From': ['bishop at designafternext.com (Bishop Zareh)'],
- 'Refrences': ['<50E0B2B7.7010304@entersection.org>'],
- 'Date': ['Mon, 31 Dec 2012 18:09:37 -0600'],
- 'Reply': ['<50E0B2B7.7010304@entersection.org>'],
- 'ID': ['<07080613-2615-4B02-BD9D-8024FD1CD62E@designafternext.com>', '<50E0B2B7.7010304@entersection.org>'],
- 'Subject': ["[liberationtech] Jacob Appelbaum's 29C3 keynote"]
+ 'From': ['bob at ILovePeanuts.com (Bob Peanut)'],
+ 'Refrences': ['<50E0B2B7.7010304@butterOfTheNut.org>'],
+ 'Date': ['Mon, 01 Dec 2002 18:09:37 -0600'],
+ 'Reply': ['<50E0B2B7.7010304@butterOfTheNut.org>'],
+ 'ID': ['<07080613-2615-4B02-BD9D-8024FD1CD62E@designafternext.com>', '<50E0B2B7.7010304@butterOfTheNut.org>'],
+ 'Subject': ["[LegumeLovers] Macadamia nuts are for the weak!"]
 
 
 Well, that is it for parsing the e-mail headers. In the next piece I will go in more depth about how we parse the body text to make it easier to connect in-line responses to their initial message and how we refactor our hacked up code to better expose our list-serv parsers API for content analysis.
@@ -238,17 +237,17 @@ Well, that is it for parsing the e-mail headers. In the next piece I will go in 
 
 Lets look at the "regular" parts of a body message:
 
-First lets start with PGP signatures. Below is a PGP signature I pulled from Lib tech. (I changed a few chars to make it gibberish.) 
+First lets start with PGP signatures. Below is a PGP signature I pulled from Lib tech. (Don't worry, its a gibberish signature I made)
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (GNU/Linux)
 
-iQEcBAEBAgAGBQJ9bCs0AAoJEBEET9GfxSfMgKEH/1rGH6GNm0DpPO6lnFJnTBvH
-kEnNSjU3b5BuYIw39wYfG3GE3sOsFuTnt0/KMWGB9M+-XqpNo08Yt3HXUfv2Lii0
-eIm9JOLb1/CfmnCyenVgkYKs2vORQmolAMSu+pqxuY1hb4GwffRG+uY5wu6jA4fc
-CpdQz8ylPmoEfptbIpAhvu52t2QAPcOvHKSs3xA4hafeDLXG7mebmG7Rbft+gs9G
-v8w4NMxrXiKoB/v7kR7ZOO7Jr1uRLUMn6prhVS+99v46dPyxGZDjiXO+VRohC2DG
-LsqkgyhdGY8a1FXVeUAKVc0YTud4I1E1d135TqqpE9DsFmh/QgEP2QSk/XZl1zg=
+iQEcBAEBAgAGBQJ9bCs0AAoJEBEET9GfxSfMgKEH/1rGH6GNm0eeDpPO6lnFJnTBvH
+kEnNSjU323fds55Iw39wYfG3GE3sOsFuTnt0/KMWGB9M+-XqpNo08Yt3HXUfv2Lii0
+eIm9JOLb1/CfmnCyenVgkYKs2vORQmolAMSu+pqxuY1h23f3GwffRG+uY5wu6jA4fc
+CpdQz8ylPmoEfptbIpAhvu52t2QAPcOvHKSs3xA4hafeDLXfse7mebmG7Rbft+gs9G
+v8w4NMxrXiKoB/v7kR7ZOO7Jr1uRLUMn6prhVS+99v46dPyxGZDjdsiXO+VRohC2DG
+LsqkgyhdGY8a1FXVeUAKVc0YTud4I1E1d135TqqpE9DsFmh/QgEP2QdfSk/XZl1zg=
 =bWOj
 -----END PGP SIGNATURE-----
 
@@ -277,28 +276,25 @@ Since scrubbed attachements are always the last bit of data on the message I hav
 Finally we are moving to more complex parsing, capturing reply's. Reply's have a consitant format of using increasing >'s as a way of specifying how many e-mails ago the text came from. a line starting with one > signifies the last messages text. Two >> signifies that that text is a reply to another reply. Three >> is a reply, to a reply, to a reply, and so on.  Below are some examples.
 
 In-Line replys:
-On 10/6/12 10:36 PM, Collin Anderson wrote:
-> It'll also be really useful to know of 'piratepad' type platforms
-> that are secure, and there's controls over deleting the
-> collaborative pads/docs.
-
+On 10/3/02 10:36 PM, Bob Jones wrote:
+> Four score and server years ago, our fathers brought forth twice a
+> couple patriarchs whose mothers husbands did once more than a few give
+> data to the people.
 
 Nested In-Line replys:
-On 10/6/12 10:36 PM, Collin Anderson wrote:
-> On Sat, Oct 6, 2012 at 4:45 PM, Fabio Pietrosanti (naif) <
-> lists at infosecurity.ch> wrote:
-> Hello,
->> If you're looking to use it all the time (eg with your class, group,
->> organization), then it might be worthwhile to host your own [1].
-> I advise against it. While many groups started to do that only few
-> services are left operational. Most servers went down to their knews.
-
+On 10/3/02 10:36 PM, Bob Jones wrote:
+> Four score and server years ago, our fathers brought forth twice a
+> couple patriarchs whose mothers husbands did once more than a few give
+> data to the people.
+>> This is complete gibberish. What is wrong with you. We all know that it
+>> was five score, not four score. This is why I stopped using wikipedia
+>> and started asking all important queries on /b
 
 Notice that the reply header is determinant on the mail client that sends it.
 
-On Oct 5, 2012, at 7:02 AM, Katy P <katycarvt at gmail.com> wrote:
-On 10/6/12 10:36 PM, Collin Anderson wrote:
-On Sat, Oct 6, 2012 at 4:45 PM, Fabio Pietrosanti (naif) <lists at infosecurity.ch> wrote:
+On Oct 6, 2012, at 2:02 AM, Sarah P <theMonster at mailisgood.com> wrote:
+On 10/10/10 10:10 PM, Denary Tennenbaum wrote:
+On Sat, Oct 2, 2042 at 4:45 PM, Ed Sullivan (Sully) <lists at deadpeopleinthefuture.ch> wrote:
 
 But, the basic structure starting with 'On' and ending with 'wrote:' allows us to capture this data in case we want to play with it later.
 
