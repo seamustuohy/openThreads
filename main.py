@@ -8,6 +8,7 @@ class converter:
     def __init__(self):
         self.raw = ''
         self.messages = []
+        self.First = []
 
     def getArchive(self, textFile):
         """This function takes the location of the list-serv text file and opens it up for parsing
@@ -97,7 +98,7 @@ class converter:
         test = re.findall(PGP, msgDict['body'], flags=re.DOTALL)
 
         #take all we have parsed in a message and append it to the main messages que
-        self.messages.append(msgDict)
+        self.messages.append(msgDict) 
 
         #lets look at what we have appended.
         #print(self.messages[len(self.messages)-1]['From'])
@@ -136,7 +137,7 @@ class converter:
         for i in emailList:
             header = emailList[i][2]
                 
-    def jsonMaker(self, command, fileName):
+    def jsonMaker(self, command, fileName, data=None):
         if command == 'open':
             f = open('file.json', 'r');
             tmpMsg = f.read()
@@ -144,6 +145,10 @@ class converter:
         elif command == 'save':
             f = open(fileName + '.json', 'w');
             f.write(json.dumps(self.messages));
+            f.close()
+        elif command == 'saveBio':
+            f = open(fileName + '.json', 'w');
+            f.write(json.dumps(data));
             f.close()
         
     def firstPost(self):
@@ -162,10 +167,10 @@ class converter:
                 name = str(i['Name'])
                 parsedFirst[name] = i
             exist = 0
-        return(parsedFirst)
+        self.First = parsedFirst
 
-    def initialResponse(self, ID):
-        '''A function that takes a message ID and looks at what kind of response people receive on their first post. This collects the ammount of replies to an individuals first post on a listserv and returns the message id of all responses as well as the ammount of messages a individual user posts to a listserv after their first thread. '''
+    def Response(self, ID):
+        '''A function that takes a message ID and looks at what kind of response people receive on their post. This collects the ammount of replies to an individuals first post on a listserv and returns the message id of all responses as well as the ammount of messages a individual user posts to a listserv after their first thread. '''
 
     #Grabs the identified message from the main message structure
         message = ''
@@ -213,6 +218,21 @@ class converter:
                 replies.append(i)
         return repTotal, replies
 
+    def totalReplies(self, name):
+        """returns the total number of direct replies a user receives"""
+        repNames = []
+        repID = []
+        repTotal = 0
+        for i in self.messages:
+            if i['Name'] == name:
+                if i['ID'] != []:
+                    repNum, repRep = self.replies(i['ID'])
+                    repTotal += repNum
+                    for x in repRep:
+                        repID.append(x['ID'])
+                        repNames.append(x['Name'])
+        return repTotal, repID, repNames 
+    
     def onlyTheBest(self):
         '''This was a small function I created to see who the most common posters are... this is NOT a useful function for gaining a top posting list as once the highest poster is found ze overshadows any other posters.''' 
         first = self.firstPost()
@@ -225,13 +245,22 @@ class converter:
                 time.sleep(.1)
 
     def postsPer(self):
-        first = self.firstPost()
+        first = self.First
         postNum = []
         for h,k in first.iteritems():
             total, ID = self.totalMessages(k['Name'])
             postNum.append((k['Name'], total))
         return postNum
 
+    def users(self):
+        first = self.First
+        userList = []
+        for h,k in first.iteritems():
+            total, ID = self.totalMessages(k['Name'])
+            userList.append(k['Name'])
+        return userList
+
+    
     def topPosters(self):
         """Returns the top 25 posters"""
         postnum = self.postsPer()
@@ -256,39 +285,50 @@ class converter:
                 missed.append(i[0])
         return missed
         
-    def newMessages(self):
-        """returns the ID of messages that are never responded to"""
+    def newMessages(self, name=None):
+        """returns the ID of messages that are not responses to another message"""
         newMessages = []
         for i in self.messages:
             if i['Reply'] == []:
-                newMessages.append(i['ID'])
+                if name is None:
+                    newMessages.append(i['ID'])
+                else:
+                    if i['Name'] == name:
+                        newMessages.append(i['ID'])
         return newMessages
 
     def noResponse(self):
         """return the ID of all posts that are never responded to"""
         newMsg = self.newMessages()
         for i in self.messages:
-            #NOTE: many items are lists in self.messages and must be pulled out of the list to play with
+            #NOTE: many items are lists in self.messages and must be pulled out of the list to play with/remove them.
             if i['Reply'] != [] and i['Reply'][0] in newMsg:
                 newMsg.remove(i['Reply'][0])
         return newMsg
     
-    
-    def allreplys(self):
+    def allreplys(self, name=None):
         """returns the ID of all replies (these may also reference other messages, be warned about that"""
         repMessages = []
         for i in self.messages:
             if i['Reply'] != []:
-                repMessages.append(i['ID'])
+                if name is None:
+                    repMessages.append(i['ID'])
+                else:
+                    if i['Name'] == name:
+                        repMessages.append(i['ID'])
         return repMessages
 
-    def allrefs(self):
-        '''returns the ID of messages that reference another message'''
-        refMessages = []
-        for i in self.messages:
-            if i['References'] != []:
-                refMessages.append(i['ID'])
-        return refMessages
+    def allrefs(self, name=None):
+         '''returns the ID of messages that reference another message'''
+         refMessages = []
+         for i in self.messages:
+             if i['References'] != []:
+                 if name is None:
+                     refMessages.append(i['ID'])
+                 else:
+                     if i['Name'] == name:
+                         refMessages.append(i['ID'])
+         return refMessages
 
     def checkIt(self):
         """ a checker function that I wrote to explore other functions"""
@@ -299,7 +339,102 @@ class converter:
                 print(i['Name'], i['Subject'])
 
 
-                
+    def threads(self, name=None):
+        '''returns the subject name of every unique thread and total number.'''
+        threads = []
+        threadNum = 1
+        messages = self.newMessages()
+        if name is None:
+            for i in messages:
+                threads.append(i)
+                threadNum += 1
+        else:
+            for i in self.messages:
+                if i['Name'] == name:
+                    for x in messages:
+                        for a in i['References']:
+                            #TODO I have to sanitize this data to get rid f extra spaces and odd nested lists at some point
+                            if ' '+a == x:
+                                threads.append(x)
+                                threadNum += 1
+                                messages.remove(x)
+        return threads, threadNum
+
+
+
+    
+    def bios(self, name):
+        """A function that builds user histories for a listserv"""
+        #get message ID's they have used.
+
+        total, userMsgs = self.totalMessages(name)
+        
+        #get total user initiated posts by a user
+
+        userInitiated = self.newMessages(name)
+        initNum = 0
+        for i in userInitiated:
+            initNum +=1
+
+        
+        #get total user responses by a user
+
+        replyNum = 0
+        replyID = self.allreplys(name)
+        for i in replyID:
+            replyNum +=1
+            
+        #Get total independent threads a user was active in
+
+        threadNames, threadNum = self.threads(name)
+        
+        #get number of direct responses to user's comments
+
+        directReplies, repID, repNames = self.totalReplies(name)
+
+        #get most replied to (more than one) other user
+
+        repRep = {}
+        for i in repNames:
+            if repRep.has_key(i[0]):
+                repRep[i[0]] += 1
+            else:
+                repRep[i[0]] = 1
+        winners = []
+        curBest = 1
+        for x in repRep.iteritems():
+            if x[1] > curBest:
+                curBest = x[1]
+                winners = []
+                winners.append(x[0])
+            elif x[1] == curBest:
+                winners.append(x[0])
+        winners.append(curBest)
+        mostReplied = winners
+
+        #get list of users who targeted user replied to on the listServ
+
+        repliedTo = []
+        for n in self.messages:
+            for j in userMsgs:
+                if j in n['Reply']:
+                    repliedTo.append(n['Name'])
+        
+        #get users first post to the list
+        for i in self.First.itervalues():
+            if i['Name'] == name:
+                firstPost = i
+
+
+        return {'firstPost':firstPost, 'mostRepliedTo':repliedTo, 'mostReplied':mostReplied, 'directResponses':directReplies, 'activeThreads':threadNum, 'replies':replyNum, 'userLedThreads':initNum}  
+
+    def runBios(self):
+        users  = self.users()
+        bios = []
+        for i in users:
+            bios.append(self.bios(i))
+        return(bios)
+    
 def runTest(b):
     #needs to mimic the below... it does not currently.
     #reload(main); a=main.converter(); a.getArchive('testtext'); a.defRegular('mailman'); a.firstPost()
