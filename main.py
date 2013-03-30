@@ -3,7 +3,6 @@ import time
 import json
 print("Main Parser Function loading")
 
-
 class converter:
     def __init__(self):
         self.raw = ''
@@ -267,7 +266,7 @@ class converter:
         sortedPost = sorted(postnum, key=self.sortTop)
         check = 1
         top = []
-        while check <= 25:
+        while check <= 100:
             if sortedPost[-check]:
                 top.append(sortedPost[-check])
             check += 1
@@ -426,7 +425,7 @@ class converter:
                 firstPost = i
 
 
-        return {'firstPost':firstPost, 'mostRepliedTo':repliedTo, 'mostReplied':mostReplied, 'directResponses':directReplies, 'activeThreads':threadNum, 'replies':replyNum, 'userLedThreads':initNum}  
+        return {'mostRepliedTo':repliedTo, 'mostReplied':mostReplied, 'directResponses':directReplies, 'activeThreads':threadNum, 'replies':replyNum, 'userLedThreads':initNum}  
 
     def runBios(self):
         users  = self.users()
