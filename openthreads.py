@@ -1,28 +1,33 @@
 import re
 import time
 import json
-print("Main Parser Function loading")
+print("Welcome to Open Threads... Please run openThread(FILE_NAME) to open a text file of a list serv")
 
-class openthread:
+class openThread:
     def __init__(self, fileLoc):
         """Creating a new openThread requires that you pass it the location of the thread that you wish to parse."""
+
+        print("Parsing list-serv... This may take a moment")
+        self.raw = self.getArchive(fileLoc)
         self.messages = []
-        self.raw = self.defRegular(fileLoc)
+        self.defRegular()
+        print("List Serv Parsed. Identifying Unique users...")
         self.First = self.firstPost()
+        print("Users Identified! Thank you for waiting.")
 
     def getArchive(self, textFile):
         """This function takes the location of the list-serv text file and opens it up for parsing
         """
         text = open(textFile)
         rawText = text.read()
-        self.raw = rawText
+        return rawText
 
-    def defRegular(self, listserv):
+    def defRegular(self):
         """This function takes the location of the list-serv text file and opens it up for parsing. Much later I may add the ability to just choose the html address of a list-serv archive. That will be straight up neato!
         """
         if self.raw == '':
             print("Please get a list serv archive and import it file first.")
-        elif listserv == 'mailman':
+        else:
             who = '\S*\sat\s\S*'
             headerFront = '\nFrom\s' + who + '\s*'
             capturedFront = '\nFrom\s(' + who + ')\s*'
@@ -36,8 +41,6 @@ class openthread:
             getHeader = '(.*?Message\-ID\:\s(.*?)\n)'
             fullHead = dropTop + getHeader
             splitText = re.split(dropTop, self.raw)
-        else:
-            print("please choose a list serve type to parse")
         for i in splitText:
             self.dictify(i)
 
@@ -60,13 +63,13 @@ class openthread:
         references = 'References\:\s*?(.*?)\nMessage\-ID\:'
         messageID = 'Message\-ID\:\s*?(.*?)\n'
         name = '\((.*)\)'
-        #Tue, 8 Nov 2011 11:58:09 -0800 (PST)
         
        #create a dictionary item for the header items that are always there.
         whoCheck = re.findall(whom, email, flags=re.DOTALL)        
         if whoCheck:
             msgDict['From'] = self.checkReg(whoCheck)
-            msgDict['Name'] = re.findall(name, self.checkReg(whoCheck))
+            msgDict['Name'] = re.findall(name, self.checkReg(whoCheck))[0]
+
 
         dateCheck = re.findall(date, email, flags=re.DOTALL)
         if dateCheck:
@@ -105,6 +108,12 @@ class openthread:
 
         #its hard to make sure things are working right without time to inspect the output
         #time.sleep(1)
+
+    def checkReg(self, item):
+        if type(item) == list:
+            return(item[0])
+        else:
+            return(item)
         
     def compactDate(self, dateCheck):
         second, minute, hour, day, month, year = 0,0,0,0,0,0
@@ -124,11 +133,6 @@ class openthread:
         compactDate = str(year) + str(month) + str(day) + str(hour) + str(minute) + str(second)
         return(compactDate)
 
-    def checkReg(self, item):
-        if type(item) == list:
-            return(item[0])
-        else:
-            return(item)
         
     def parseMessages(self, messageDict, flags):
         """ This function takes a message dictionary and parses it to elucidate understandings about it. This will most likely be a major function that calls a series of parsing functions that will return results to the function based upon what information it passes to them. This way I can call specialized data sets on this function from elsewhere 
@@ -426,15 +430,32 @@ class openthread:
                 firstPost = i
 
 
-        return {'mostRepliedTo':repliedTo, 'mostReplied':mostReplied, 'directResponses':directReplies, 'activeThreads':threadNum, 'replies':replyNum, 'userLedThreads':initNum}  
+        return {'name':name, 'mostRepliedTo':repliedTo, 'mostReplied':mostReplied, 'directResponses':directReplies, 'activeThreads':threadNum, 'replies':replyNum, 'userLedThreads':initNum}  
 
     def runBios(self):
         users  = self.users()
+        totalUsers = len(users)
+        print("Please wait... "+str(totalUsers)+" user profiles to run")
         bios = []
+        numComplete = 0
+        #Start Percentage Print Values
+        y = 0
+        tenth = len(users) / 10
+        check = tenth
+        percent = 10
+        #End Percentage Print values
         for i in users:
             bios.append(self.bios(i))
+            #Start Print Percentage
+            y += 1
+            if y >= check:
+                print (str(percent) + "% completed")
+                percent += 10
+                check += tenth
+                #end Print Percentage
         return(bios)
-    
+
+
 def runTest(b):
     #needs to mimic the below... it does not currently.
     #reload(main); a=main.converter(); a.getArchive('testtext'); a.defRegular('mailman'); a.firstPost()
