@@ -1,6 +1,7 @@
 import re
 import time
 import json
+import couchdb
 print("Welcome to Open Threads... Please run openthreads.openThread(FILE_NAME) to open a text file of a list serv")
 
 class openThread:
@@ -141,7 +142,31 @@ class openThread:
     def parseHeader(self, emailList):
         for i in emailList:
             header = emailList[i][2]
-                
+
+    def couchDB(self, server=None, port=None, database=None, data=None):
+        """This connects to an existing couchDB server and exports data to it. This function does not provide any other couchDB functionality. You have to do that all on your end. :) """
+        #checking for if external server or if server is on localhost as well as for the port of the server is unique
+        if server:
+            if port:
+                couch = couchdb.Server('http://'+server+':'+port)
+            else:
+                couch = couchdb.Server('http://'+server+':5984/')
+        else:
+            couch = couchdb.Server()
+            
+        # select database or set to default listServ database
+        if database:
+            db = couch[database]
+        else:
+            db = couch["listServ"]
+        
+        #This will check if you pass it a specifc data set and send either that, or the full messages dict to the database
+        if data:
+            db.save(data)
+        else:
+            db.save(self.messages)
+        
+        
     def jsonMaker(self, command, fileName, data=None):
         if command == 'open':
             f = open('file.json', 'r');
