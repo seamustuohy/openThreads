@@ -1,19 +1,21 @@
 import re
 import time
 import json
-print("Welcome to Open Threads... Please run openThread(FILE_NAME) to open a text file of a list serv")
+print("Welcome to Open Threads... Please run openthreads.openThread(FILE_NAME) to open a text file of a list serv")
 
 class openThread:
     def __init__(self, fileLoc):
         """Creating a new openThread requires that you pass it the location of the thread that you wish to parse."""
-
-        print("Parsing list-serv... This may take a moment")
-        self.raw = self.getArchive(fileLoc)
-        self.messages = []
-        self.defRegular()
-        print("List Serv Parsed. Identifying Unique users...")
-        self.First = self.firstPost()
-        print("Users Identified! Thank you for waiting.")
+        if fileLoc:
+            print("Parsing list-serv... This may take a moment")
+            self.raw = self.getArchive(fileLoc)
+            self.messages = []
+            self.defRegular()
+            print("List Serv Parsed. Identifying Unique users...")
+            self.First = self.firstPost()
+            print("Users Identified! Thank you for waiting.")
+        else:
+            print("Please specify a list serv you would like to parse.")
 
     def getArchive(self, textFile):
         """This function takes the location of the list-serv text file and opens it up for parsing
@@ -36,7 +38,6 @@ class openThread:
             date = day + '\s' + month + '\s*?\d*?\s\S*?\s\d{4}\n'
             capTop = capturedFront + '(' + date + ')'
             dropTop = headerFront + date
-#TODO - create captures for all header sections
 #TODO - rewrite the following line to become a dictionary that parses the monthly log and create indiviudal dictionaries of all pertinant header info for each e-mail and includes the content.
             getHeader = '(.*?Message\-ID\:\s(.*?)\n)'
             fullHead = dropTop + getHeader
