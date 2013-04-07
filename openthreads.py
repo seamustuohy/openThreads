@@ -3,11 +3,12 @@ import time
 import json
 print("Main Parser Function loading")
 
-class converter:
-    def __init__(self):
-        self.raw = ''
+class openthread:
+    def __init__(self, fileLoc):
+        """Creating a new openThread requires that you pass it the location of the thread that you wish to parse."""
         self.messages = []
-        self.First = []
+        self.raw = self.defRegular(fileLoc)
+        self.First = self.firstPost()
 
     def getArchive(self, textFile):
         """This function takes the location of the list-serv text file and opens it up for parsing
@@ -166,7 +167,7 @@ class converter:
                 name = str(i['Name'])
                 parsedFirst[name] = i
             exist = 0
-        self.First = parsedFirst
+        return parsedFirst
 
     def Response(self, ID):
         '''A function that takes a message ID and looks at what kind of response people receive on their post. This collects the ammount of replies to an individuals first post on a listserv and returns the message id of all responses as well as the ammount of messages a individual user posts to a listserv after their first thread. '''
