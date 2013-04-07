@@ -2,6 +2,7 @@ import re
 import time
 import json
 import couchdb
+import sys
 print("Welcome to Open Threads... Please run openthreads.openThread(FILE_NAME) to open a text file of a list serv")
 
 class openThread:
@@ -135,7 +136,6 @@ class openThread:
         compactDate = str(year) + str(month) + str(day) + str(hour) + str(minute) + str(second)
         return(compactDate)
 
-        
     def parseMessages(self, messageDict, flags):
         """ This function takes a message dictionary and parses it to elucidate understandings about it. This will most likely be a major function that calls a series of parsing functions that will return results to the function based upon what information it passes to them. This way I can call specialized data sets on this function from elsewhere 
         """
@@ -176,7 +176,7 @@ class openThread:
             f = open(fileName + '.json', 'w');
             f.write(json.dumps(self.messages));
             f.close()
-        elif command == 'saveBio':
+        elif command == 'saveData':
             f = open(fileName + '.json', 'w');
             f.write(json.dumps(data));
             f.close()
@@ -205,8 +205,7 @@ class openThread:
     #Grabs the identified message from the main message structure
         message = ''
         for i in self.messages:
-            if i['ID'] == ID:
-                message = i
+            if i['ID'] == ID:                message = i
         if message == '':
             return 'no message found, are you sure that code is correct?'
     
@@ -383,16 +382,43 @@ class openThread:
                 if i['Name'] == name:
                     for x in messages:
                         for a in i['References']:
-                            #TODO I have to sanitize this data to get rid f extra spaces and odd nested lists at some point
+                            #TODO I have to sanitize this data to get rid of extra spaces and odd nested lists at some point
                             if ' '+a == x:
                                 threads.append(x)
                                 threadNum += 1
                                 messages.remove(x)
         return threads, threadNum
 
-
-
-    
+    def gender(self, name=None):
+        """This function imports a dictionary of genders from parsables/gender.py and checks the name against them. It is not the best way, but I need to find a completely open list of names to check against """
+        #TODO find a completely open dictionary of international names and genders to parse against and import it upon start
+        sys.path.append( "parsables")
+        import gender
+        if name is None:
+            for i in self.First:
+                curName = re.findall("(.*)\s", str.upper(self.First[i]['Name']))
+                if curName == []:
+                    curName = str.upper(self.First[i]['Name'])
+                elif type(curName) == list:
+                    curName = curName[0]
+                if curName in gender.gender:
+                    self.First[i]['Gender'] = gender.gender[curName]
+                else:
+                    self.First[i]['Gender'] = "unknown"
+        else:
+            if name in self.First:
+                curName = re.findall("(.*)\s", str.upper(self.First[name]['Name']))
+                if curName == []:
+                    curName = str.upper(self.First[name]['Name'])
+                elif type(curName) == list:
+                    curName = curName[0]
+                if curName in gender.gender:
+                    return gender.gender[curName]
+                else:
+                    return "unknown"
+            else:
+                print("That is not a person in this data set. Are you sure you typed it correctly?")
+            
     def bios(self, name):
         """A function that builds user histories for a listserv"""
         #get message ID's they have used.
