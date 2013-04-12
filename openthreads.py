@@ -68,7 +68,7 @@ class openThread:
         name = '\((.*)\)'
         
        #create a dictionary item for the header items that are always there.
-        whoCheck = re.findall(whom, email, flags=re.DOTALL)        
+        whoCheck = re.findall(whom, email, flags=re.DOTALL)
         if whoCheck:
             msgDict['From'] = self.checkReg(whoCheck)
             msgDict['Name'] = re.findall(name, self.checkReg(whoCheck))[0]
@@ -136,9 +136,8 @@ class openThread:
         compactDate = str(year) + str(month) + str(day) + str(hour) + str(minute) + str(second)
         return(compactDate)
 
-    def parseMessages(self, messageDict, flags):
-        """ This function takes a message dictionary and parses it to elucidate understandings about it. This will most likely be a major function that calls a series of parsing functions that will return results to the function based upon what information it passes to them. This way I can call specialized data sets on this function from elsewhere 
-        """
+
+        
     def parseHeader(self, emailList):
         for i in emailList:
             header = emailList[i][2]
@@ -288,7 +287,6 @@ class openThread:
             total, ID = self.totalMessages(k['Name'])
             userList.append(k['Name'])
         return userList
-
     
     def topPosters(self):
         """Returns the top 25 posters"""
@@ -366,7 +364,6 @@ class openThread:
         for i in self.messages:
             if i['ID'] in no:
                 print(i['Name'], i['Subject'])
-
 
     def threads(self, name=None):
         '''returns the subject name of every unique thread and total number.'''
@@ -452,12 +449,12 @@ class openThread:
 
         repRep = {}
         for i in repNames:
-            if repRep.has_key(i[0]):
-                repRep[i[0]] += 1
+            if repRep.has_key(i):
+                repRep[i] += 1
             else:
-                repRep[i[0]] = 1
+                repRep[i] = 1
         winners = []
-        curBest = 1
+        curBest = 0
         for x in repRep.iteritems():
             if x[1] > curBest:
                 curBest = x[1]
