@@ -3,20 +3,25 @@ import time
 import json
 import couchdb
 import sys
-print("Welcome to Open Threads... Please run openthreads.openThread(FILE_NAME) to open a text file of a list serv")
+
+def logMe(logItem):
+    if __name__ == '__main__':
+        print(logItem)
+
+logMe("Welcome to Open Threads... Please run openthreads.openThread(FILE_NAME) to open a text file of a list serv")
 
 class openThread:
     def __init__(self, fileLoc):
         """Creating a new openThread requires that you pass it the location of the thread that you wish to parse."""
         if fileLoc:
-            print("Parsing list-serv... This may take a moment")
+            logMe("Parsing list-serv... This may take a moment")
             self.raw = self.getArchive(fileLoc)
             self.messages = self.getMessages(self.raw)
-            print("List Serv Parsed. Identifying Unique users...")
+            logMe("List Serv Parsed. Identifying Unique users...")
             self.First = self.firstPost()
-            print("Users Identified! Thank you for waiting.")
+            logMe("Users Identified! Thank you for waiting.")
         else:
-            print("Please specify a list serv you would like to parse.")
+            logMe("Please specify a list serv you would like to parse.")
 
     def getArchive(self, textFile):
         """This function takes the location of the list-serv text file and opens it up for parsing
@@ -37,7 +42,7 @@ class openThread:
         """This function takes the location of the list-serv text file and opens it up for parsing. Much later I may add the ability to just choose the html address of a list-serv archive. That will be straight up neato!
         """
         if raw == '':
-            print("Please get a list serv archive and import it file first.")
+            logMe("Please get a list serv archive and import it file first.")
         else:
             who = '\S*\sat\s\S*'
             headerFront = '\nFrom\s' + who + '\s*'
@@ -211,7 +216,7 @@ class openThread:
     #gather the ammount of total messages a user has sent
         message['totalCount'], totalMsgId = self.totalMessages(message['Name'])
 
-        print(message['Name'], "total messages by user:" + str(message['totalCount']), "number of replies to this message:" + str(message['repNum']))
+        logMe(message['Name'], "total messages by user:" + str(message['totalCount']), "number of replies to this message:" + str(message['repNum']))
 
     def totalMessages(self, name):
         '''This function takes a users name and returns the ID's of all their messages on a mailing list and the total number.'''
@@ -266,7 +271,7 @@ class openThread:
             total, tossIDs = self.totalMessages(k['Name'])
             if total > curBest:
                 curBest = total
-                print(k['Name'], curBest)
+                logMe(k['Name'], curBest)
                 time.sleep(.1)
 
     def postsPer(self):
@@ -360,7 +365,7 @@ class openThread:
         no = self.noResponse()
         for i in self.messages:
             if i['ID'] in no:
-                print(i['Name'], i['Subject'])
+                logMe(i['Name'], i['Subject'])
 
     def threads(self, name=None):
         '''returns the subject name of every unique thread and total number.'''
@@ -411,7 +416,7 @@ class openThread:
                 else:
                     return "unknown"
             else:
-                print("That is not a person in this data set. Are you sure you typed it correctly?")
+                logMe("That is not a person in this data set. Are you sure you typed it correctly?")
             
     def bios(self, name):
         """A function that builds user histories for a listserv"""
@@ -481,7 +486,7 @@ class openThread:
     def runBios(self):
         users  = self.users()
         totalUsers = len(users)
-        print("Please wait... "+str(totalUsers)+" user profiles to run")
+        logMe("Please wait... "+str(totalUsers)+" user profiles to run")
         bios = []
         numComplete = 0
         #Start Percentage Print Values
@@ -495,7 +500,7 @@ class openThread:
             #Start Print Percentage
             y += 1
             if y >= check:
-                print (str(percent) + "% completed")
+                logMe(str(percent) + "% completed")
                 percent += 10
                 check += tenth
                 #end Print Percentage

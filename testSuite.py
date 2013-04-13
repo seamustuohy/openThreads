@@ -42,8 +42,11 @@ class testFunctions(unittest.TestCase):
          'Subject': '[email-list] The Second Message'}
         self.assertEqual(test, self.listSrv.messages[1])
 
-        
+    def test_couchDB(self):
+        print("TODO Create a CouchDB test")
 
-    
+
+
+
 if __name__ == '__main__':
     unittest.main()
