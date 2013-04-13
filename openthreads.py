@@ -100,7 +100,7 @@ class openThread:
         if msgDict['References'] != []:
             msgDict['References'] = re.split('\s*|\n\t', msgDict['References'][0])
 
-        #Body Parsing
+        #TODO implement the below Body Parsing and more once we have text parsing in the roadmap
         beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
         endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
         PGP = beginPGP + '(.*?)' + endPGP
@@ -109,17 +109,12 @@ class openThread:
         replyName = 'On\s(.*?)wrote\:'
         test = re.findall(PGP, msgDict['Body'], flags=re.DOTALL)
 
-        #take all we have parsed in a message and append it to the main messages que
         return msgDict
 
-
-        #lets look at what we have appended.
-        #print(self.messages[len(self.messages)-1]['From'])
-
-        #its hard to make sure things are working right without time to inspect the output
-        #time.sleep(1)
-
     def checkReg(self, item):
+        """ This function takes all sections that I don't want in a list and returns the first string.
+        TODO: make sure that the header sections that are being run through here are not losing data through this process.
+        """
         if type(item) == list:
             return(item[0])
         else:
@@ -148,7 +143,7 @@ class openThread:
     def parseHeader(self, emailList):
         for i in emailList:
             header = emailList[i][2]
-
+            
     def couchDB(self, server=None, port=None, database=None, data=None):
         """This connects to an existing couchDB server and exports data to it. This function does not provide any other couchDB functionality. You have to do that all on your end. :) """
         #checking for if external server or if server is on localhost as well as for the port of the server is unique

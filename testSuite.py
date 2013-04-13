@@ -29,7 +29,21 @@ class testFunctions(unittest.TestCase):
         split = self.listSrv.split(raw)
         self.assertEqual(len(split), 5)
 
-    
+    def test_dictifying(self):
+        test = {
+         'Body': '\n\n\nI am a second messsage. I am From: testie McTesterson.\n\nLOVE Testie\n',
+         'From': 'testie at cs.testuni.edu (Testie McTesterson)',
+         'Name': 'Testie McTesterson',
+         'compactDate': '2008713221101',
+         'References': [],
+         'Date': ' Sun, 13 Jul 2008 22:11:01 -0700',
+         'Reply': [],
+         'ID': ' <a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>',
+         'Subject': '[email-list] The Second Message'}
+        self.assertEqual(test, self.listSrv.messages[1])
 
+        
+
+    
 if __name__ == '__main__':
     unittest.main()
