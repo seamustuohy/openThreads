@@ -11,8 +11,7 @@ class openThread:
         if fileLoc:
             print("Parsing list-serv... This may take a moment")
             self.raw = self.getArchive(fileLoc)
-            self.messages = []
-            self.defRegular()
+            self.messages = self.getMessages(self.raw)
             print("List Serv Parsed. Identifying Unique users...")
             self.First = self.firstPost()
             print("Users Identified! Thank you for waiting.")
@@ -26,10 +25,18 @@ class openThread:
         rawText = text.read()
         return rawText
 
-    def defRegular(self):
+    def getMessages(self, raw):
+        messages = []
+        splitText = self.split(raw)
+        for i in splitText:
+            msgDict = self.dictify(i)
+            messages.append(msgDict)
+        return messages
+    
+    def split(self, raw):
         """This function takes the location of the list-serv text file and opens it up for parsing. Much later I may add the ability to just choose the html address of a list-serv archive. That will be straight up neato!
         """
-        if self.raw == '':
+        if raw == '':
             print("Please get a list serv archive and import it file first.")
         else:
             who = '\S*\sat\s\S*'
@@ -43,10 +50,9 @@ class openThread:
 #TODO - rewrite the following line to become a dictionary that parses the monthly log and create indiviudal dictionaries of all pertinant header info for each e-mail and includes the content.
             getHeader = '(.*?Message\-ID\:\s(.*?)\n)'
             fullHead = dropTop + getHeader
-            splitText = re.split(dropTop, self.raw)
-        for i in splitText:
-            self.dictify(i)
-
+            splitText = re.split(dropTop, raw)
+            return splitText
+        
     def dictify(self, email):
         """This function takes a raw text version of a list-serv archive and converts it into a parsable dictionary... possibly in JSON format. Yea, we will do JSON formatting because the internets love them some JSON
         """
@@ -56,7 +62,7 @@ class openThread:
         msg = re.findall(getHeader + '(.*)', email, flags=re.DOTALL)
         #create a dictionary item for body text
         for i in msg:
-            msgDict['body'] = i[1]
+            msgDict['Body'] = i[1]
         # Setting header specific regEx's
         whom = 'From\:\s(.*?)\n'
         date = 'Date\:\s*?(.*?)\n'
@@ -101,10 +107,11 @@ class openThread:
         scrubbed = '\-{14}\s[a-z]{4}\s[a-z]{4}\s\-{14}'
         grabScrubbed = scrubbed + '(.*)'
         replyName = 'On\s(.*?)wrote\:'
-        test = re.findall(PGP, msgDict['body'], flags=re.DOTALL)
+        test = re.findall(PGP, msgDict['Body'], flags=re.DOTALL)
 
         #take all we have parsed in a message and append it to the main messages que
-        self.messages.append(msgDict) 
+        return msgDict
+
 
         #lets look at what we have appended.
         #print(self.messages[len(self.messages)-1]['From'])
@@ -119,13 +126,15 @@ class openThread:
             return(item)
         
     def compactDate(self, dateCheck):
+        """
+        TestingMethod = checkCompDate"""
         second, minute, hour, day, month, year = 0,0,0,0,0,0
         dWrd = '[A-Z][a-z]{2}'
         compDateDict = ''+dWrd+',\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})\:(\d{2})'
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         compactTup = re.findall(compDateDict, self.checkReg(dateCheck))
         for i in [i for i,x in enumerate(months) if x == compactTup[0][1]]:
-            month = i
+            month = i + 1
         day = compactTup[0][0]
         if len(day) == 1:
             day = str(0) + day
@@ -136,8 +145,6 @@ class openThread:
         compactDate = str(year) + str(month) + str(day) + str(hour) + str(minute) + str(second)
         return(compactDate)
 
-
-        
     def parseHeader(self, emailList):
         for i in emailList:
             header = emailList[i][2]
@@ -152,7 +159,6 @@ class openThread:
                 couch = couchdb.Server('http://'+server+':5984/')
         else:
             couch = couchdb.Server()
-            
         # select database or set to default listServ database
         if database:
             db = couch[database]
@@ -225,7 +231,7 @@ class openThread:
                 userTotal += 1
                 userMsgs.append(i['ID'])
         return userTotal, userMsgs
-        
+
     def reference(self, ID):
         '''This function takes a message ID and returns a list of all the messages that are on the thread of the identified message.''' 
         refTotal = 0
