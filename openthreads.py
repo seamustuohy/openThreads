@@ -139,10 +139,6 @@ class openThread:
         hour = compactTup[0][3]
         compactDate = str(year) + str(month) + str(day) + str(hour) + str(minute) + str(second)
         return(compactDate)
-
-    def parseHeader(self, emailList):
-        for i in emailList:
-            header = emailList[i][2]
             
     def couchDB(self, server=None, port=None, database=None, data=None):
         """This connects to an existing couchDB server and exports data to it. This function does not provide any other couchDB functionality. You have to do that all on your end. :) """
