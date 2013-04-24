@@ -45,8 +45,20 @@ class testFunctions(unittest.TestCase):
     def test_couchDB(self):
         print("TODO Create a CouchDB test")
 
+    def test_json(self):
+        #test open
+        openedJSON = self.listSrv.jsonMaker("open", "tests/testOpenJSON")
+        self.assertEqual(openedJSON, {'test':'data'})
+        #test save
+        self.listSrv.jsonMaker("save", "tests/testSaveJSON", {'item':'content'})
+        openSavedJSON = self.listSrv.jsonMaker("open", "tests/testSaveJSON")
+        self.assertEqual(openSavedJSON, {u'item':u'content'})
+
+    def test_first(self):
+        """Test that first produces the first message by each user."""
+        
 
 
-
+        
 if __name__ == '__main__':
     unittest.main()

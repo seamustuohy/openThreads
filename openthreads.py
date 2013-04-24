@@ -5,6 +5,7 @@ import couchdb
 import sys
 
 def logMe(logItem):
+    """This function prints out logging when the program is called form the command line."""
     if __name__ == '__main__':
         print(logItem)
 
@@ -18,7 +19,7 @@ class openThread:
             self.raw = self.getArchive(fileLoc)
             self.messages = self.getMessages(self.raw)
             logMe("List Serv Parsed. Identifying Unique users...")
-            self.First = self.firstPost()
+            self.First = self.firstPost(self.messages)
             logMe("Users Identified! Thank you for waiting.")
         else:
             logMe("Please specify a list serv you would like to parse.")
@@ -167,25 +168,24 @@ class openThread:
         else:
             db.save(self.messages)
         
-        
     def jsonMaker(self, command, fileName, data=None):
         if command == 'open':
-            f = open('file.json', 'r');
+            f = open(fileName+'.json', 'r');
             tmpMsg = f.read()
-            self.messages = json.loads(tempMsg)
+            return json.loads(tmpMsg)
+        elif command == 'save' and data != None:
+            f = open(fileName + '.json', 'w');
+            f.write(json.dumps(data));
+            f.close()
         elif command == 'save':
             f = open(fileName + '.json', 'w');
             f.write(json.dumps(self.messages));
             f.close()
-        elif command == 'saveData':
-            f = open(fileName + '.json', 'w');
-            f.write(json.dumps(data));
-            f.close()
         
-    def firstPost(self):
+    def firstPost(self, messages):
         parsedFirst = {}
         exist = 0
-        for i in self.messages:
+        for i in messages:
             for x in parsedFirst:
                 name = str(i['Name'])
                 if i['Name'] == parsedFirst[x]['Name']:
