@@ -327,7 +327,7 @@ class openThread:
                     if i['Name'] == name:
                         newMessages.append(i['ID'])
                         numMsgs += 1
-        return newMessages numMsgs
+        return newMessages, numMsgs
 
     def noResponse(self):
         """return the ID of all posts that are never responded to"""
@@ -430,15 +430,12 @@ class openThread:
         #get total user initiated posts by a user
 
         userInitiated = self.newMessages(name)
-        initNum = 0
-        for i in userInitiated:
-            initNum +=1
 
         
         #get total user responses by a user
 
         replyNum = 0
-        replyID = self.allreplys(name)
+        replyID, replyNum = self.allreplys(name)
         for i in replyID:
             replyNum +=1
             
