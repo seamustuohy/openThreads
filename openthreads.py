@@ -226,7 +226,7 @@ class openThread:
             if i['Name'] == name:
                 userTotal += 1
                 userMsgs.append(i['ID'])
-        return userTotal, userMsgs
+        return userMsgs, userTotal
 
     def reference(self, ID):
         '''This function takes a message ID and returns a list of all the messages that are on the thread of the identified message.''' 
@@ -268,7 +268,7 @@ class openThread:
         first = self.firstPost()
         curBest = 2
         for h,k in first.iteritems():
-            total, tossIDs = self.totalMessages(k['Name'])
+            tossIDs, total = self.totalMessages(k['Name'])
             if total > curBest:
                 curBest = total
                 logMe(k['Name'], curBest)
@@ -278,7 +278,7 @@ class openThread:
         first = self.First
         postNum = []
         for h,k in first.iteritems():
-            total, ID = self.totalMessages(k['Name'])
+            ID, total = self.totalMessages(k['Name'])
             postNum.append((k['Name'], total))
         return postNum
 
@@ -286,7 +286,7 @@ class openThread:
         first = self.First
         userList = []
         for h,k in first.iteritems():
-            total, ID = self.totalMessages(k['Name'])
+            ID, total = self.totalMessages(k['Name'])
             userList.append(k['Name'])
         return userList
     
@@ -338,17 +338,20 @@ class openThread:
                 newMsg.remove(i['Reply'][0])
         return newMsg
     
-    def allreplys(self, name=None):
+    def allReplys(self, name=None):
         """returns the ID of all replies (these may also reference other messages, be warned about that"""
         repMessages = []
+        repNum = 0
         for i in self.messages:
             if i['Reply'] != []:
                 if name is None:
                     repMessages.append(i['ID'])
+                    repnum += 1
                 else:
                     if i['Name'] == name:
                         repMessages.append(i['ID'])
-        return repMessages
+                        repNum += 1
+        return repMessages, repNum
 
     def allrefs(self, name=None):
          '''returns the ID of messages that reference another message'''
@@ -408,36 +411,41 @@ class openThread:
                 else:
                     self.First[i]['Gender'] = "unknown"
         else:
-            if name in self.First:
-                curName = re.findall("(.*)\s", str.upper(self.First[name]['Name']))
-                if curName == []:
-                    curName = str.upper(self.First[name]['Name'])
-                elif type(curName) == list:
-                    curName = curName[0]
-                if curName in gender.gender:
-                    return gender.gender[curName]
-                else:
-                    return "unknown"
+            curName = re.findall("(.*)\s", str.upper(name))
+            if curName == []:
+                curName = str.upper(name)
+            elif type(curName) == list:
+                curName = curName[0]
+            if curName in gender.gender:
+                return gender.gender[curName]
             else:
-                logMe("That is not a person in this data set. Are you sure you typed it correctly?")
-            
+                return "unknown"
+                
+    def wpmCalc(self, msg, wpm=35):
+        #Scrub PGP
+        beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
+        endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
+        PGP = beginPGP + '(.*?)' + endPGP
+        scrubbed = '\-{14}\s[a-z]{4}\s[a-z]{4}\s\-{14}'
+        grabScrubbed = scrubbed + '(.*)'
+        replyName = 'On\s(.*?)wrote\:'
+        test = re.findall(PGP, msg, flags=re.DOTALL)
+
+
+                
     def bios(self, name):
         """A function that builds user histories for a listserv"""
         #get message ID's they have used.
 
-        total, userMsgs = self.totalMessages(name)
+        userMsgs, total = self.totalMessages(name)
         
         #get total user initiated posts by a user
 
         userInitiated = self.newMessages(name)
-
         
         #get total user responses by a user
 
-        replyNum = 0
-        replyID, replyNum = self.allreplys(name)
-        for i in replyID:
-            replyNum +=1
+        replyID, replyNum = self.allReplys(name)
             
         #Get total independent threads a user was active in
 
@@ -474,7 +482,7 @@ class openThread:
             for j in userMsgs:
                 if j in n['Reply']:
                     repliedTo.append(n['Name'])
-        
+
         #get users first post to the list
         for i in self.First.itervalues():
             if i['Name'] == name:

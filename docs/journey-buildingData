@@ -192,18 +192,30 @@ def messageStrucCreator(self, msgID):
 def participantStrucCreator(self, name):
     """This function created a data structure from a parsed list-serv that is focused on analizing individual list-serv participants """
 	#Do Stuff
+        #get message ID's they have used.
+        userMsgs, totalMsgs = self.totalMessages(name)
+        #get total user responses by a user
+        replyID, replyNum = self.allReplys(name)
+        #get "response Metric" (replies/total#)
+        responseMtrc = replyNum/totalMsgs
+        #get total user initiated posts by a user
+        userInitiated, numInitiated = self.newMessages(name)
+        #get "starter metric - threads started / total #"
+        starterMtrc = numInitiated/totalMsgs
+        #TODO  "time spent per email/thread metric - words per email (given a words per minute count) avg, max, min" This will be too hard to do without better/any body parsing to identify content.
+        #Get Gender
+        genderGuess = self.gender(name
     participants = {
         name = name
-        totalPosts = "total # of posts"
-        response = "response metric - replies / total #"
-        starter = "starter metric - threads started / total #"
+        totalPosts = totalMsgs
+        response = responseMtrc
+        starter = starterMtrc
         conversationGenerator = "conversation generator metric - threads started / average number of replies to thread (or total? not sure)"
         control = "control metric - # of replies / # threads started by participant"
-        msgTimeSpent = "time spent per email metric - words per email (given a words per minute count) avg, max, min"
-        threadTimeSpent = "time spent per thread metric - words per email thread aggregated for the thread"
         gender = "gender"
         participantType = "type: active, passive, one time"
         entryTime = "started participation in list (timestamp/date)"
+        threadCommittment = "Ammount of messages per thread"
         messages = {"message array", "will we use message ID or full message structure?"}
         threads = {"thread array", "will we use thread ID or full thread structure?"}
         }
