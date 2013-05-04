@@ -1,0 +1,214 @@
+In this installment of openThreads coding logs I will be working from a list of visualization data structures backwards to the code to create those structures.
+
+The code has evolved quite a bit since the last post. You will notice some small changes to function and variable names, some untangling of the spagetti code that we started with, and a great deal of added functionality. With that said, let us start to code.
+
+The openThreads team currently consists of three people. We meet once a week to discuss our tasks, look over what we have accomplished, and other group process pleasentries.
+
+Over the last few weeks I have been showing up to these meetings with various collections of data in hand. This is usually in response to a question or idea that was created the week before. One week we will have talked about how we identify gender, so the next week I bring a function that runs the names through a list of us census and gender data. This is a great way to quickly build sets of functions that provide userful functionality, but is not the best for creating useful presentations of the data.
+
+Last week our visualization expert came brandishing data structures that she wanted me to create. This means that it is time to take all of my small single use functions and wrap them in a data set creator that will output a unified data structure for any database that we enter into the program.
+
+Here are the data structures that I was provided.
+
+<ul>Participant
+<li>    id<li>
+<li>    total # of posts<li>
+<li>    response metric - replies / total #<li>
+<li>    starter metric - threads started / total #<li>
+<li>    conversation generator metric - threads started / average number of replies to thread (or total? not sure)<li>
+<li>    control metric - # of replies / # threads started by participant<li>
+<li>    time spent per email metric - words per email (given a words per minute count) avg, max, min<li>
+<li>    time spent per thread metric - words per email thread aggregated for the thread<li>
+<li>    gender<li>
+<li>    type: active, passive, one time<li>
+<li>    started participation in list (timestamp/date)<li>
+<li>    message array<li>
+<li>    thread array<li>
+</ul>
+
+<ul>Message
+<li>    id<li>
+<li>    time spent metric - words per email (given a words per minute count)<li>
+<li>    message type: categorical (forward, question, reply, ...)<li>
+<li>    start timedate<li>
+<li>    end timedate<li>
+<li>    gender of the sender<li>
+<li>    sender type (active, passive, first time)<li>
+<li>    topic/category: maybe something about the listserv topic generally? for when we compare lists.. tbd<li>
+<li>    thread id<li>
+<li>    participant id<li>
+</ul>
+
+<ul>Thread
+<li>    id</li>
+<li>    time spent metric - words per email (given a words per minute count): sum, avg, max, min</li>
+<li>    thread type: information sharing, contentious, collaborative, ... [ not sure how we would characterize this]</li>
+<li>    start timedate</li>
+<li>    end timedate</li>
+<li>    gender balance ( % male or a count of each gender?)</li>
+<li>    participant balance (actives, passives, first timers)</li>
+<li>    topic: maybe something about the listserv topic generally? for when we compare lists.. tbd</li>
+<li>    message array</li>
+<li>    participant array</li></ul>
+
+
+Let us get started! As before, I am going to write this as I work through the code. This means that you will be seeing my unedited stream of coding. You should expect that the code I create will be changed for the final program as I re-factor and build tests for each component.
+
+The first step is going to be determining our work flow for these functions. As the openThreads code has become more complex it impacts how functions should be built. Since my last post I have included functions that output data structures passed to them in various formats. This means that each of the data creation functions must pass the data structures they make to another function when completed. We can use this to create the same internal data structures that we created in the last post, or to simply push the data out of the program. Knowing this, here is our starting point.
+
+def threadStrucCreator(self):
+	"""This function created a data structure from a parsed list-serv that is focused on analizing individual message threads """
+	#Do Stuff
+	return(threads)
+
+def messageStrucCreator(self):
+	"""This function created a data structure from a parsed list-serv that is focused on analizing individual messages """
+	#Do Stuff
+	return(messages)
+
+def participantStrucCreator(self):
+	"""This function created a data structure from a parsed list-serv that is focused on analizing individual list-serv participants """
+	#Do Stuff
+	return(participants)
+
+A quick overview for those of us who are not python geeks. The "def" defines the word following it as a function name. The "()" following the function name accept any data we wish to pass to that function. In this case, because our function is contained within a larger structure called a class, we want to pass all the variables defined within the larger "self" of that class to the function so that it can use them. If a function has quoted test directly after the first colon it uses that as help text for other programmers looking at this code. the temporary text I have here is not that helpful, but we will add more as we go along. Any text that is preceded by a hash mark "#" is a in-line comment that is not read by the computer. Finally, this function "returns" its participants value to whatever other function called it.
+
+I am currently building functions for a couchdb instance. That is a database. I said instance two sentances ago because the db in couchdb stands for database. Many geeks like to point out that saying "couchdb database" is redundantly stating database twice. I point this out because the db=database component of this is not obvious to a new user. When people critique or mock those who say "couchdb database" it acts as social sanctioning for not adhering to an argot (secret language) that excludes the uninitiated. I encountered this a few times in my research on couchdb and shrugged it off as the usual expert gruffness. But, this is exactly what openThreads was built for. So, if you would like to send me an e-mail about how I use couchdb database throughout this article, please do it on a list-serv. It will be a great addition to our data. :)
+
+While the couchdb function I use in the program is more complex than the straw man I am about to show you I want to talk briefly about what I intend to do with these functions.
+
+If our couchdb function looks like this...
+
+def couchDB(data):
+	sendToDatabase(data)
+
+Then we can easily send our functions to the database using somthing like this. 
+
+>> participants = participantStrucCreator()
+>> couchDB(participants)
+
+or this....
+
+>> couchDB(participantStrucCreator())
+
+This works because participantStrucCreator() returns its results to whatever it is called from. As such, we can use participantStrucCreator() as a placeholder in the code for the data it creates. If, in the future, we decide we need to be able to pass data to participantStrucCreator() we can nest it further as below.
+
+>> couchDB(participantStrucCreator(data))
+
+
+With a basic understanding of how our structure is going to look in relation to the rest of the program let's take our data structures and create a program output from them. To do this I have simply created a data structure that holds our required variables. Each of the variables currently only hold their definition.
+
+def threadStrucCreator(self):
+    """This function created a data structure from a parsed list-serv that is focused on analizing individual message threads """
+	#Do Stuff
+    threads = {
+        ThreadID = "thread id"
+        time = "time spent metric - words per email (given a words per minute count):sum, avg, max, min"
+        threadType = "thread type: information sharing, contentious, collaborative, ... [ not sure how we would characterize this]"
+        startTime = "start timedate"
+        endTime = "end timedate"
+        genderBallance = "gender balance ( % male or a count of each gender?)"
+        participants = "participant balance (actives, passives, first timers)"
+        topic = "topic: maybe something about the listserv topic generally? for when we compare lists.. tbd"
+        messages = {"message array", "will we use message ID or full message structure?"}
+        participants = {"participant array", "will we use ID's or full participant structures?"}
+	}
+    return(threads)
+
+def messageStrucCreator(self):
+    """This function created a data structure from a parsed list-serv that is focused on analizing individual messages """
+	#Do Stuff
+    messages = {
+        msgID = "message ID"
+        threadID = "thread id"
+        participantID = "participant id"
+        msgType = "message type: categorical (forward, question, reply, ...)"
+        time = "time spent metric - words per email (given a words per minute count)"
+        gender = "gender of the sender"
+        senderType = "sender type (active, passive, first time)"
+        category = "topic/category: maybe something about the listserv topic generally? for when we compare lists.. tbd"
+
+        }
+    return(messages)
+
+def participantStrucCreator(self):
+    """This function created a data structure from a parsed list-serv that is focused on analizing individual list-serv participants """
+	#Do Stuff
+    participants = {
+        participantID = "Participant id"
+        totalPosts = "total # of posts"
+        response = "response metric - replies / total #"
+        starter = "starter metric - threads started / total #"
+        conversationGenerator = "conversation generator metric - threads started / average number of replies to thread (or total? not sure)"
+        control = "control metric - # of replies / # threads started by participant"
+        msgTimeSpent = "time spent per email metric - words per email (given a words per minute count) avg, max, min"
+        threadTimeSpent = "time spent per thread metric - words per email thread aggregated for the thread"
+        gender = "gender"
+        participantType = "type: active, passive, one time"
+        entryTime = "started participation in list (timestamp/date)"
+        messages = {"message array", "will we use message ID or full message structure?"}
+        threads = {"thread array", "will we use thread ID or full thread structure?"}
+        }
+    return(participants)
+
+
+
+
+NEXT LEVEL
+
+def threadStrucCreator(self, msgID):
+    """This function created a data structure from a parsed list-serv that is focused on analizing individual message threads """
+	#Do Stuff
+    threads = {
+        ThreadID = "thread id"
+        time = "time spent metric - words per email (given a words per minute count):sum, avg, max, min"
+        threadType = "thread type: information sharing, contentious, collaborative, ... [ not sure how we would characterize this]"
+        startTime = "start timedate"
+        endTime = "end timedate"
+        genderBallance = "gender balance ( % male or a count of each gender?)"
+        participants = "participant balance (actives, passives, first timers)"
+        topic = "topic: maybe something about the listserv topic generally? for when we compare lists.. tbd"
+        messages = {"message array", "will we use message ID or full message structure?"}
+        participants = {"participant array", "will we use ID's or full participant structures?"}
+	}
+    return(threads)
+
+def messageStrucCreator(self, msgID):
+    """This function created a data structure from a parsed list-serv that is focused on analizing individual messages """
+	#Do Stuff
+    messages = {
+        msgID = "message ID"
+        threadID = "thread id"
+        participantID = "participant id"
+        msgType = "message type: categorical (forward, question, reply, ...)"
+        time = "time spent metric - words per email (given a words per minute count)"
+        gender = "gender of the sender"
+        senderType = "sender type (active, passive, first time)"
+        category = "topic/category: maybe something about the listserv topic generally? for when we compare lists.. tbd"
+
+        }
+    return(messages)
+
+def participantStrucCreator(self, name):
+    """This function created a data structure from a parsed list-serv that is focused on analizing individual list-serv participants """
+	#Do Stuff
+    participants = {
+        name = name
+        totalPosts = "total # of posts"
+        response = "response metric - replies / total #"
+        starter = "starter metric - threads started / total #"
+        conversationGenerator = "conversation generator metric - threads started / average number of replies to thread (or total? not sure)"
+        control = "control metric - # of replies / # threads started by participant"
+        msgTimeSpent = "time spent per email metric - words per email (given a words per minute count) avg, max, min"
+        threadTimeSpent = "time spent per thread metric - words per email thread aggregated for the thread"
+        gender = "gender"
+        participantType = "type: active, passive, one time"
+        entryTime = "started participation in list (timestamp/date)"
+        messages = {"message array", "will we use message ID or full message structure?"}
+        threads = {"thread array", "will we use thread ID or full thread structure?"}
+        }
+    return(participants)
+
+
+
+

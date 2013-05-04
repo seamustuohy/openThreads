@@ -1,0 +1,42 @@
+Data Structures
+
+<ul>Participant
+<li>    id<li>
+<li>    total # of posts<li>
+<li>    response metric - replies / total #<li>
+<li>    starter metric - threads started / total #<li>
+<li>    conversation generator metric - threads started / average number of replies to thread (or total? not sure)<li>
+<li>    control metric - # of replies / # threads started by participant<li>
+<li>    time spent per email metric - words per email (given a words per minute count) avg, max, min<li>
+<li>    time spent per thread metric - words per email thread aggregated for the thread<li>
+<li>    gender<li>
+<li>    type: active, passive, one time<li>
+<li>    started participation in list (timestamp/date)<li>
+<li>    message array<li>
+<li>    thread array<li>
+</ul>
+
+<ul>Message
+<li>    id<li>
+<li>    time spent metric - words per email (given a words per minute count)<li>
+<li>    message type: categorical (forward, question, reply, ...)<li>
+<li>    start timedate<li>
+<li>    end timedate<li>
+<li>    gender of the sender<li>
+<li>    sender type (active, passive, first time)<li>
+<li>    topic/category: maybe something about the listserv topic generally? for when we compare lists.. tbd<li>
+<li>    thread id<li>
+<li>    participant id<li>
+</ul>
+
+<ul>Thread
+<li>    id</li>
+<li>    time spent metric - words per email (given a words per minute count): sum, avg, max, min</li>
+<li>    thread type: information sharing, contentious, collaborative, ... [ not sure how we would characterize this]</li>
+<li>    start timedate</li>
+<li>    end timedate</li>
+<li>    gender balance ( % male or a count of each gender?)</li>
+<li>    participant balance (actives, passives, first timers)</li>
+<li>    topic: maybe something about the listserv topic generally? for when we compare lists.. tbd</li>
+<li>    message array</li>
+<li>    participant array</li></ul>

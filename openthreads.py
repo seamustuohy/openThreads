@@ -317,14 +317,17 @@ class openThread:
     def newMessages(self, name=None):
         """returns the ID of messages that are not responses to another message"""
         newMessages = []
+        numMsgs = 0
         for i in self.messages:
             if i['Reply'] == []:
                 if name is None:
                     newMessages.append(i['ID'])
+                    numMsgs += 1
                 else:
                     if i['Name'] == name:
                         newMessages.append(i['ID'])
-        return newMessages
+                        numMsgs += 1
+        return newMessages numMsgs
 
     def noResponse(self):
         """return the ID of all posts that are never responded to"""
@@ -514,3 +517,4 @@ def runTest(b):
     a.getArchive(b)
     a.defRegular("mailman")
     a.firstPost()
+
