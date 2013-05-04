@@ -262,17 +262,6 @@ class openThread:
                         repID.append(x['ID'])
                         repNames.append(x['Name'])
         return repTotal, repID, repNames 
-    
-    def onlyTheBest(self):
-        '''This was a small function I created to see who the most common posters are... this is NOT a useful function for gaining a top posting list as once the highest poster is found ze overshadows any other posters.''' 
-        first = self.firstPost()
-        curBest = 2
-        for h,k in first.iteritems():
-            tossIDs, total = self.totalMessages(k['Name'])
-            if total > curBest:
-                curBest = total
-                logMe(k['Name'], curBest)
-                time.sleep(.1)
 
     def postsPer(self):
         first = self.First
@@ -339,7 +328,7 @@ class openThread:
         return newMsg
     
     def allReplys(self, name=None):
-        """returns the ID of all replies (these may also reference other messages, be warned about that"""
+        """returns the ID of all replies by a user (these may also reference other messages, be warned about that"""
         repMessages = []
         repNum = 0
         for i in self.messages:
@@ -353,16 +342,22 @@ class openThread:
                         repNum += 1
         return repMessages, repNum
 
-    def allrefs(self, name=None):
-         '''returns the ID of messages that reference another message'''
+    def allrefs(self, name=None, source=None):
+         '''returns the ID of messages that reference another message or belong to a user... has redundant functionality to refrences()'''
          refMessages = []
          for i in self.messages:
-             if i['References'] != []:
+             if source is None:
+                 if i['References'] != []:
+                     if name is None:
+                         refMessages.append(i['ID'])
+                     else:
+                         if i['Name'] == name:
+                             refMessages.append(i['ID'])
+             elif source in i['References']:
                  if name is None:
                      refMessages.append(i['ID'])
-                 else:
-                     if i['Name'] == name:
-                         refMessages.append(i['ID'])
+                 elif i['Name'] == name:
+                     refMessages.append(i['ID'])
          return refMessages
 
     def checkIt(self):
@@ -489,8 +484,45 @@ class openThread:
                 firstPost = i
 
 
-        return {'name':name, 'mostRepliedTo':repliedTo, 'mostReplied':mostReplied, 'directResponses':directReplies, 'activeThreads':threadNum, 'replies':replyNum, 'userLedThreads':initNum}  
+        return {'name':name, 'mostRepliedTo':repliedTo, 'mostReplied':mostReplied, 'directResponses':directReplies, 'activeThreads':threadNum, 'replies':replyNum, 'userLedThreads':initNum}
+            
+    def participantStrucCreator(self, name):
+        """This function created a data structure from a parsed list-serv that is focused on analizing individual list-serv participants """
+	#Do Stuff
+        #get message ID's they have used.
+        userMsgs, totalMsgs = self.totalMessages(name)
+        #get total user responses by a user
+        replyID, replyNum = self.allReplys(name)
+        #get "response Metric" (replies/total#)
+        responseMtrc = float(replyNum)/float(totalMsgs)
+        #get total user initiated posts by a user
+        userInitiated, numInitiated = self.newMessages(name)
+        #get "starter metric - threads started / total #"
+        starterMtrc = float(numInitiated)/float(totalMsgs)
+        #TODO  "time spent per email/thread metric - words per email (given a words per minute count) avg, max, min" This will be too hard to do without better/any body parsing to identify content.
+        #Get Gender
+        genderGuess = self.gender(name)
+        #TODO identify participant types so that we cna create this value participantType = "type: active, passive, one time"
+        #"control metric - # of replies / # threads started by participant"
+        cntrlMtrc = float(replyNum)/float(numInitiated)
+        #What am I supposed to calculate? threadCommittment = "Ammount of messages per thread"
+        #We need to decide on how to measure this. conversationGenerator = "conversation generator metric - threads started / average number of replies to thread (or total? not sure)"
+        
+        participants = {
+            'name':name,
+            'totalPosts':totalMsgs,
+            'response':responseMtrc,
+            'starter':starterMtrc,
+            'control':cntrlMtrc,
+            'gender':genderGuess,
+            'entryTime':self.First[name]['Date'],
+            'messages':replyID,
+            'threads':userInitiated,
+            }
+        return participants
+    
 
+    
     def runBios(self):
         users  = self.users()
         totalUsers = len(users)
