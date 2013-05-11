@@ -161,36 +161,42 @@ def threadStrucCreator(self, msgID):
 	#Do Stuff
     threads = {
         ThreadID = "thread id"
-        time = "time spent metric - words per email (given a words per minute count):sum, avg, max, min"
-        threadType = "thread type: information sharing, contentious, collaborative, ... [ not sure how we would characterize this]"
+        writingtime = "time spent metric - words per email (given a words per minute count):sum, avg, max, min"
         startTime = "start timedate"
         endTime = "end timedate"
-        genderBallance = "gender balance ( % male or a count of each gender?)"
-        participants = "participant balance (actives, passives, first timers)"
-        topic = "topic: maybe something about the listserv topic generally? for when we compare lists.. tbd"
-        messages = {"message array", "will we use message ID or full message structure?"}
-        participants = {"participant array", "will we use ID's or full participant structures?"}
+        calendartime = "time between first and last nmessage on a thread"
+        genderBalance = "gender balance ( % male or a count of each gender?)"
+        messages = {"message array", "will we use message ID"}
+        participants = {"participant array", "will we use ID"}
 	}
     return(threads)
 
 def messageStrucCreator(self, msgID):
-    """This function created a data structure from a parsed list-serv that is focused on analizing individual messages """
+        """This function created a data structure from a parsed list-serv that is focused on analizing individual messages """
 	#Do Stuff
-    messages = {
-        msgID = "message ID"
-        threadID = "thread id"
-        participantID = "participant id"
-        msgType = "message type: categorical (forward, question, reply, ...)"
-        time = "time spent metric - words per email (given a words per minute count)"
-        gender = "gender of the sender"
-        senderType = "sender type (active, passive, first time)"
-        category = "topic/category: maybe something about the listserv topic generally? for when we compare lists.. tbd"
-
-        }
-    return(messages)
+        #Get full message
+        for i in self.messages:
+                if i['ID'] == msgID:
+                        message = i
+        #Get Thread ID
+        if message['References'] and message['References'][0]:
+                threadID = message['Refereces'][0]
+        #Define Message Types (fwd:, re:, )
+        if message['Reply'] != []:
+                for i in self.messages:
+                
+        messages = {"msgID":msgID,
+                    "threadID":threadID,
+                    "participantID":message['Name'],
+                    "msgType":"message type: categorical (forward, continuing reply, new, concluding reply)",
+                    "time":"time spent metric - words per email (given a words per minute count)",
+                    "gender":"gender of the sender",
+                    "senderType":"sender type (active, passive, first time)"
+                    }
+        return(messages)
 
 def participantStrucCreator(self, name):
-    """This function created a data structure from a parsed list-serv that is focused on analizing individual list-serv participants """
+        """This function created a data structure from a parsed list-serv that is focused on analizing individual list-serv participants """
 	#Do Stuff
         #get message ID's they have used.
         userMsgs, totalMsgs = self.totalMessages(name)
@@ -198,34 +204,32 @@ def participantStrucCreator(self, name):
         replyID, replyNum = self.allReplys(name)
         #get "response Metric" (replies/total#)
         responseMtrc = float(replyNum)/float(totalMsgs)
-        print(replyNum)
-        print(totalMsgs)
         #get total user initiated posts by a user
         userInitiated, numInitiated = self.newMessages(name)
         #get "starter metric - threads started / total #"
-        starterMtrc = numInitiated/totalMsgs
+        starterMtrc = float(numInitiated)/float(totalMsgs)
         #TODO  "time spent per email/thread metric - words per email (given a words per minute count) avg, max, min" This will be too hard to do without better/any body parsing to identify content.
         #Get Gender
         genderGuess = self.gender(name)
-        #TODO identify participant types so that we cna create this value participantType = "type: active, passive, one time"
         #"control metric - # of replies / # threads started by participant"
-        cntrlMtrc = replyNum/numInitiated
-        #What am I supposed to calculate? threadCommittment = "Ammount of messages per thread"
-        #We need to decide on how to measure this. conversationGenerator = "conversation generator metric - threads started / average number of replies to thread (or total? not sure)"
-
-    participants = {
-        name = name
-        totalPosts = totalMsgs
-        response = responseMtrc
-        starter = starterMtrc
-        control = cntrlMtrc
-        gender = genderGuess
-        entryTime = self.First[name]['Date']
-        messages = replyID
-        threads = userInitiated
-        }
-    return participants
-
+        cntrlMtrc = float(replyNum)/float(numInitiated)
+        #TODO ENGAGEMENT  = "Average number of replies a user has per thread"
+        #TODO the average ammount of replies this individual gets per thread they start
+#We need to decide on how to measure this. conversationGenerator = "conversation generator metric - threads started / average number of replies to thread (or total? not sure)"
+        
+        participants = {
+            'name':name,
+            'totalPosts':totalMsgs,
+            'response':responseMtrc,
+            'starter':starterMtrc,
+            'control':cntrlMtrc,
+            'gender':genderGuess,
+            'entryTime':self.First[name]['Date'],
+            'messages':replyID,
+            'threads':userInitiated,
+            }
+        return participants
+    
 
 
 

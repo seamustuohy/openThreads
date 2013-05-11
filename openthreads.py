@@ -20,6 +20,7 @@ class openThread:
             self.messages = self.getMessages(self.raw)
             logMe("List Serv Parsed. Identifying Unique users...")
             self.First = self.firstPost(self.messages)
+            self.threads = self.threader(self.messages)
             logMe("Users Identified! Thank you for waiting.")
         else:
             logMe("Please specify a list serv you would like to parse.")
@@ -74,9 +75,9 @@ class openThread:
         date = 'Date\:\s*?(.*?)\n'
         dWrd = '[A-Z][a-z]{2}'
         subject = 'Subject\:\s(.*?)\n'
-        inReply = 'In\-Reply\-To\:\s*?(.*?)\n'
-        references = 'References\:\s*?(.*?)\nMessage\-ID\:'
-        messageID = 'Message\-ID\:\s*?(.*?)\n'
+        inReply = 'In\-Reply\-To\:\s*?(<.*?)\n'
+        references = 'References\:\s*?(<.*?)\nMessage\-ID\:'
+        messageID = 'Message\-ID\:\s*?(<.*?)\n'
         name = '\((.*)\)'
         
        #create a dictionary item for the header items that are always there.
@@ -200,6 +201,20 @@ class openThread:
             exist = 0
         return parsedFirst
 
+    def threader(self, messages):
+        """This function takes a set of messages and returns a dictionary of threadID's that hold the ID's of the messages within them. It is not very efficiant sorting. But, for now I just need to get the data. I will refactor later."""
+        threads = {}
+        for i in messages:
+            if i['References'] == []:
+                threads[i['ID']] = []
+        for i in messages:
+            if i['References'] != []:
+                for n in i['References']:
+                    if n in threads:
+                        threads[n].append(i['ID'])
+        return threads
+    
+    
     def Response(self, ID):
         '''A function that takes a message ID and looks at what kind of response people receive on their post. This collects the ammount of replies to an individuals first post on a listserv and returns the message id of all responses as well as the ammount of messages a individual user posts to a listserv after their first thread. '''
 
@@ -372,7 +387,7 @@ class openThread:
         '''returns the subject name of every unique thread and total number.'''
         threads = []
         threadNum = 1
-        messages = self.newMessages()
+        messages, null = self.newMessages()
         if name is None:
             for i in messages:
                 threads.append(i)
@@ -382,8 +397,7 @@ class openThread:
                 if i['Name'] == name:
                     for x in messages:
                         for a in i['References']:
-                            #TODO I have to sanitize this data to get rid of extra spaces and odd nested lists at some point
-                            if ' '+a == x:
+                            if a == x:
                                 threads.append(x)
                                 threadNum += 1
                                 messages.remove(x)
