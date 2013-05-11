@@ -106,20 +106,32 @@ class openThread:
        # print(msgDict['References'])
         if msgDict['References'] != []:
             msgDict['References'] = re.split('\s*|\n\t', msgDict['References'][0])
+        msgDict['ScrapedBody'] = self.scrapeBody(msgDict['Body'])
 
         #TODO implement the below Body Parsing and more once we have text parsing in the roadmap
-        beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
-        endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
-        PGP = beginPGP + '(.*?)' + endPGP
         scrubbed = '\-{14}\s[a-z]{4}\s[a-z]{4}\s\-{14}'
         grabScrubbed = scrubbed + '(.*)'
         replyName = 'On\s(.*?)wrote\:'
-        test = re.findall(PGP, msgDict['Body'], flags=re.DOTALL)
 
         return msgDict
 
+    def scrapeBody(self, body):        
+        scraped = ''
+        msg = re.findall("^(?!>).*", body, flags=re.MULTILINE)
+        for i in msg:
+            if i != ' ':
+                scraped = scraped + ' ' + i
+        return scraped
+
+    def getPGP(self, body):
+        beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
+        endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
+        PGP = beginPGP + '(.*?)' + endPGP
+        PGP = re.findall(PGP, body, flags=re.DOTALL)
+        return PGP
+    
     def checkReg(self, item):
-        """ This function takes all sections that I don't want in a list and returns the first string.
+        """ This function takes all sections that I don't want in a listand returns the first string.
         TODO: make sure that the header sections that are being run through here are not losing data through this process.
         """
         if type(item) == list:

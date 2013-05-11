@@ -158,16 +158,63 @@ NEXT LEVEL
 
 def threadStrucCreator(self, msgID):
     """This function created a data structure from a parsed list-serv that is focused on analizing individual message threads """
-	#Do Stuff
+    #Do Stuff
+    #Check if msg is the start of a thread, or if it is in a thread.
+    participants = []
+    bodies = []
+    times = []
+    gender = []
+    #get the content of the original message
+    for i in self.messages:
+            if i['ID'] == msgID:
+                    msg = i
+    #get thread message is in
+    if msg["References"] == []:
+            threadID = msg["ID"]
+    else:
+            for i in msg["References"]:
+                    if i in self.threads:
+                            threadID = i
+    #get messages in thread
+    msgs = self.threads[threadID]
+    #get participants list, body's, and times
+    #first get the thread starter
+    for t in self.messages:
+            if t['ID'] == threadID:
+                    participants.append(t['Name'])
+                    bodies.append(t['ScrapedBody'])
+                    times.append(t['date'])
+    #Then get the thread particpants
+    for i in msgs:
+            for k in self.messages:
+                    if k['ID'] == i:
+                            participants.append(k['Name'])
+                            bodies.append(k['ScrapedBody'])
+                            times.append(k['date'])   
+    #get number of participants genders
+    for i in participants:
+            gender.append(self.gender(i))
+    genderVariance = {}
+    for i in gender:
+            if i in genderVariance:
+                    genderVariance[i] +=1
+            else:
+                    genderVariance[i] = 1
+    #get total writing time for thread
+    threadLen = 0
+    for i in bodies:
+            msgLen = float(i.__len__())/float(228)
+            threadLen += msgLen
+            
     threads = {
-        ThreadID = "thread id"
-        writingtime = "time spent metric - words per email (given a words per minute count):sum, avg, max, min"
-        startTime = "start timedate"
-        endTime = "end timedate"
-        calendartime = "time between first and last nmessage on a thread"
-        genderBalance = "gender balance ( % male or a count of each gender?)"
-        messages = {"message array", "will we use message ID"}
-        participants = {"participant array", "will we use ID"}
+        "ThreadID":threadID,
+        "writingtime": threadLen,
+        "startTime": "start timedate",
+        "endTime":"end timedate",
+        "calendartime":"time between first and last message on a thread",
+        "genderBalance": genderVariance,
+        "messages":msgs,
+        "participants":participants,
 	}
     return(threads)
 
@@ -182,15 +229,25 @@ def messageStrucCreator(self, msgID):
         if message['References'] and message['References'][0]:
                 threadID = message['Refereces'][0]
         #Define Message Types (fwd:, re:, )
-        if message['Reply'] != []:
-                for i in self.messages:
-                
+        if re.findall("^.*[fF]wd\:.*", message['Subject']) ~= []:
+                msgType = "fwd"
+        elif message['ID'] in self.threads:
+                msgType = "new"
+        #need to be able to identify reply's within a thread and those that conclude the thread. Will do this on next round.
+        else:
+                msgType = "reply"
+        #define time spent on a message
+        msgLen = message['ScrapedBody'].__len__()
+        time = float(msgLen)/float(228)
+        #Get Gender
+        genderGuess = self.gender(message['Name'])
+        #TODO Create sender type function to gather this info
         messages = {"msgID":msgID,
                     "threadID":threadID,
                     "participantID":message['Name'],
-                    "msgType":"message type: categorical (forward, continuing reply, new, concluding reply)",
-                    "time":"time spent metric - words per email (given a words per minute count)",
-                    "gender":"gender of the sender",
+                    "msgType":msgType,
+                    "minutes":time,
+                    "gender":genderGuess,
                     "senderType":"sender type (active, passive, first time)"
                     }
         return(messages)
