@@ -156,9 +156,11 @@ def participantStrucCreator(self):
 
 NEXT LEVEL
 
+I removed all of the cross referenceable components (participant type, etc.) from these data structures because we can use the database created by these functions to evaluate them easier than on the back end.
+
+
 def threadStrucCreator(self, msgID):
     """This function created a data structure from a parsed list-serv that is focused on analizing individual message threads """
-    #Do Stuff
     #Check if msg is the start of a thread, or if it is in a thread.
     participants = []
     bodies = []
@@ -190,7 +192,8 @@ def threadStrucCreator(self, msgID):
                     if k['ID'] == i:
                             participants.append(k['Name'])
                             bodies.append(k['ScrapedBody'])
-                            times.append(k['date'])   
+                            cTimes.append(k['compactDate'])
+                            times.append(k['Date'])   
     #get number of participants genders
     for i in participants:
             gender.append(self.gender(i))
@@ -203,24 +206,44 @@ def threadStrucCreator(self, msgID):
     #get total writing time for thread
     threadLen = 0
     for i in bodies:
-            msgLen = float(i.__len__())/float(228)
+            msgLen = float(i.__len__())/float(228) #228 is the avg (char) per minute I pulled from the internet
+            #TODO create this as a variable that can be set by a researcher in case they have more focused data on the communities typing ability... will not happen... but, just in case.
             threadLen += msgLen
-            
+
+    #get the difference between the start time of the thread and the last post on the thread.
+    timeDiff = self.makeTimeDiff(float(cTimes[-1])-float(cTimes[0]))
+                
     threads = {
         "ThreadID":threadID,
         "writingtime": threadLen,
-        "startTime": "start timedate",
-        "endTime":"end timedate",
-        "calendartime":"time between first and last message on a thread",
+        "startTime": times[0],
+        "endTime": times[-1],
+        "calendartime":timeDiff,
         "genderBalance": genderVariance,
         "messages":msgs,
         "participants":participants,
 	}
     return(threads)
 
+def makeTimeDiff(self, timeDiff):
+        printTime = str(timeDiff)
+        timeSize = len(printTime)
+        if timeSize == 2:
+                calTime = printTime + " seconds"
+        elif timeSize > 2:
+                calTime = printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
+        elif timeSize > 4:
+                calTime = printTime[:-4] + " Hours " + printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
+        elif timeSize > 6:
+                calTime = printTime[:-6] + " days " + printTime[:-4] + " Hours " + printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
+        elif timeSize > 8:
+                calTime = printTime[:-8] + " months " + printTime[:-6] + " days " + printTime[:-4] + " Hours " + printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
+        elif timeSize > 10:
+                calTime = printTime[:-10] + " years " + printTime[:-8] + " months " + printTime[:-6] + " days " + printTime[:-4] + " Hours " + printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
+        return calTime
+
 def messageStrucCreator(self, msgID):
         """This function created a data structure from a parsed list-serv that is focused on analizing individual messages """
-	#Do Stuff
         #Get full message
         for i in self.messages:
                 if i['ID'] == msgID:
@@ -241,20 +264,28 @@ def messageStrucCreator(self, msgID):
         time = float(msgLen)/float(228)
         #Get Gender
         genderGuess = self.gender(message['Name'])
-        #TODO Create sender type function to gather this info
         messages = {"msgID":msgID,
                     "threadID":threadID,
                     "participantID":message['Name'],
                     "msgType":msgType,
                     "minutes":time,
                     "gender":genderGuess,
-                    "senderType":"sender type (active, passive, first time)"
                     }
         return(messages)
 
 def participantStrucCreator(self, name):
         """This function created a data structure from a parsed list-serv that is focused on analizing individual list-serv participants """
 	#Do Stuff
+        bodies = []
+        dates = []
+        cDates = []
+        for i in self.messages:
+            if i['Name'] == name:
+                cDates.append(i['compactDate'])
+                bodies.append(i['ScrapedBody'])
+                dates.append(i['Date'])
+                
+        return userMsgs, userTotal
         #get message ID's they have used.
         userMsgs, totalMsgs = self.totalMessages(name)
         #get total user responses by a user
@@ -265,13 +296,40 @@ def participantStrucCreator(self, name):
         userInitiated, numInitiated = self.newMessages(name)
         #get "starter metric - threads started / total #"
         starterMtrc = float(numInitiated)/float(totalMsgs)
-        #TODO  "time spent per email/thread metric - words per email (given a words per minute count) avg, max, min" This will be too hard to do without better/any body parsing to identify content.
+        #get total writing time for user
+        userLen = 0
+        for i in bodies:
+                msgLen = float(i.__len__())/float(228) #228 is the avg (char) per minute I pulled from the internet
+                userLen += msgLen
+
         #Get Gender
         genderGuess = self.gender(name)
-        #"control metric - # of replies / # threads started by participant"
+        #control metric - # of replies / # threads started by participant
         cntrlMtrc = float(replyNum)/float(numInitiated)
-        #TODO ENGAGEMENT  = "Average number of replies a user has per thread"
-        #TODO the average ammount of replies this individual gets per thread they start
+        #ENGAGEMENT  = "Average number of replies a user has per thread"
+        usrThreads = []
+        for i in replyID:
+                for n in self.threads:
+                        if i in n:
+                                if n in usrThreads:
+                                        usrThreads[n] += 1
+                                else:
+                                        usrThreads[n] == 1
+                                        
+        #the average ammount of replies this individual gets per thread they start
+        threadReplies = []
+        for i in userInitiated:
+                repCount = 0
+                for n in self.threads[i]:
+                    repCount += 1
+                threadReplies.append(repCount)
+        totalRep = 0
+        repNum = 0
+        for i in threadReplies:
+                repNum += 1
+                totalRep += i
+        repPerThread = float(totalRep)/float(repNum)
+        
 #We need to decide on how to measure this. conversationGenerator = "conversation generator metric - threads started / average number of replies to thread (or total? not sure)"
         
         participants = {
@@ -282,8 +340,12 @@ def participantStrucCreator(self, name):
             'control':cntrlMtrc,
             'gender':genderGuess,
             'entryTime':self.First[name]['Date'],
+            'lastPost':dates[-1],
             'messages':replyID,
             'threads':userInitiated,
+            'timeSpent':userLen,
+            'engagement':usrThreads
+            'averageReplies':repPerThread,
             }
         return participants
     
