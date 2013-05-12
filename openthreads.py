@@ -333,11 +333,11 @@ class openThread:
         return missed
         
     def newMessages(self, name=None):
-        """returns the ID of messages that are not responses to another message"""
+        """returns the ID of messages that do not reference other messages"""
         newMessages = []
         numMsgs = 0
         for i in self.messages:
-            if i['Reply'] == []:
+            if i['References'] == []:
                 if name is None:
                     newMessages.append(i['ID'])
                     numMsgs += 1
@@ -545,6 +545,7 @@ class openThread:
         bodies = []
         times = []
         gender = []
+        cTimes = []
     #get the content of the original message
         for i in self.messages:
             if i['ID'] == msgID:
@@ -564,7 +565,8 @@ class openThread:
             if t['ID'] == threadID:
                 participants.append(t['Name'])
                 bodies.append(t['ScrapedBody'])
-                times.append(t['date'])
+                cTimes.append(t['compactDate'])
+                times.append(t['Date'])   
     #Then get the thread particpants
         for i in msgs:
             for k in self.messages:
@@ -629,9 +631,9 @@ class openThread:
                 message = i
         #Get Thread ID
         if message['References'] and message['References'][0]:
-            threadID = message['Refereces'][0]
+            threadID = message['References'][0]
         #Define Message Types (fwd:, re:, )
-        if re.findall("^.*[fF]wd\:.*", message['Subject']) ~= []:
+        if re.findall("^.*[fF]wd\:.*", message['Subject']) != []:
             msgType = "fwd"
         elif message['ID'] in self.threads:
             msgType = "new"
@@ -664,8 +666,6 @@ class openThread:
                 cDates.append(i['compactDate'])
                 bodies.append(i['ScrapedBody'])
                 dates.append(i['Date'])
-
-        return userMsgs, userTotal
         #get message ID's they have used.
         userMsgs, totalMsgs = self.totalMessages(name)
         #get total user responses by a user
@@ -687,21 +687,32 @@ class openThread:
         #control metric - # of replies / # threads started by participant
         cntrlMtrc = float(replyNum)/float(numInitiated)
         #ENGAGEMENT  = "Average number of replies a user has per thread"
-        usrThreads = []
-        for i in replyID:
-            for n in self.threads:
-                if i in n:
-                    if n in usrThreads:
-                        usrThreads[n] += 1
-                    else:
-                        usrThreads[n] == 1
+        usrThreads = {}
+        if replyID != 0:
+            for i in replyID:
+                for n in self.threads.iteritems():
+                    if n[1] != []:
+                        if i in n[1]:
+                            if n[0] in usrThreads:
+                                usrThreads[n[0]] += 1
+                            else:
+                                usrThreads[n[0]] = 1
+            totalRep = 0
+            repNum = 0
+            for i in usrThreads.iteritems():
+                repNum += 1
+                totalRep += i[1]
+            userRepPerThread = float(totalRep)/float(repNum)
         #the average ammount of replies this individual gets per thread they start
         threadReplies = []
         for i in userInitiated:
             repCount = 0
-            for n in self.threads[i]:
-                repCount += 1
-            threadReplies.append(repCount)
+            if self.threads[i] != []:
+                for n in self.threads[i]:
+                    repCount += 1
+                threadReplies.append(repCount)
+            else:
+                threadReplies.append(0)
         totalRep = 0
         repNum = 0
         for i in threadReplies:
@@ -723,12 +734,10 @@ class openThread:
             'messages':replyID,
             'threads':userInitiated,
             'timeSpent':userLen,
-            'engagement':usrThreads
-            'averageReplies':repPerThread,
+            'engagement':userRepPerThread,
+            'averageReplies':repPerThread
             }
         return participants
-    
-
 
 
 def runTest(b):
