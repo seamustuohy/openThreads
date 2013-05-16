@@ -4,3 +4,4 @@ parsables/
 \#*
 \.\#*
 *.pyc
+.DS_Store
