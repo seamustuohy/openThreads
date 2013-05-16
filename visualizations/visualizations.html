@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset="utf-8"/>
+<title>openThreads Visualizations</title>
+<script src="js/d3.v3.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/dc.js"></script>
+<script type="text/javascript" src="js/crossfilter.min.js"></script>
+<script type="text/javascript" src="js/gantt-chart-d3.js"></script>
+
+<style type="text/css">
+@import url("dc.css");
+@import url("gantt.css");
+</style>
+
+</head>
+<body>
+<div id="gender-row-chart">
+    <!-- Title or anything you want to add above the chart -->
+    <span>Messages By Gender</span>
+    <!--
+        if a link with css class "reset" is present then the chart
+        will automatically turn it on/off based on whether there is filter
+        set on this chart (slice selection for pie chart and brush
+        selection for bar chart)
+     -->
+    <a class="reset" href="javascript:rowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+    <!--
+        dc.js will also automatically inject applied current filter value into
+        any html element with css class set to "filter"
+    -->
+    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+    <br>
+</div> <br />
+<br />
+<div id="timeline-day-chart">
+    <!-- Title or anything you want to add above the chart -->
+    <span>Messages By Day</span>
+    <!--
+        if a link with css class "reset" is present then the chart
+        will automatically turn it on/off based on whether there is filter
+        set on this chart (slice selection for pie chart and brush
+        selection for bar chart)
+     -->
+    <a class="reset" href="javascript:rowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+    <!--
+        dc.js will also automatically inject applied current filter value into
+        any html element with css class set to "filter"
+    -->
+    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+    <br>
+</div>
+
+<form name="form1">
+	<select name="filtermenu" onChange="console.log(value); filterby(value); return true;">
+		<option value=ALL>Filter Status</option>
+		<option value=WOMEN>Women</option>
+		<option value=MEN>Men</option>
+		<option value=UNKNOWN>Unknown</option>
+	</select>
+</form>
+	<div id="gantt"> 
+	</div>
+
+<script type="text/javascript" >
+d3.json("data/messages.json", function(data) { 
+	console.log("load json");
+ 
+	var tasks = data.rows.map(function (row) {
+		//console.log(row.value);
+		if (typeof row.value.threadID !== 'string') throw new Error("unexpected type");
+		return {
+			'startDate': new Date(row.value.date),
+			'endDate': new Date(new Date(row.value.date).getTime() + row.value.minutes*60*1000),
+			'taskName': row.value.threadID,
+			'gender': row.value.gender,
+			'status': row.value.gender,
+			'list': row.value.list,
+			'msgType': row.value.msgType,
+			'participant':row.value.participantID
+		};
+
+	 });
+	tasks = tasks.slice(1, 5);
+	var mdx = crossfilter(tasks);	
+	// define group all for counting
+	var all = mdx.groupAll();
+
+	//FILTER GROUPING
+	var taskStatus = {
+   	 "women" : "bar",
+   	 "unknown" : "bar-failed",
+   	 "men" : "bar-running",
+	};
+
+	//THREAD grouping
+	var taskNames = mdx.dimension(function (d) {
+		return d.taskName;
+	});
+	
+	var taskNameList = taskNames.group().all();
+
+	// define a dimension on gender
+	var volumeByGender = mdx.dimension(function (d) { return d.gender; });
+	var volumeByGenderGroup = volumeByGender.group().reduceCount();
+
+	//day
+	var volumeOverDay = mdx.dimension(function (d) { return d3.time.day(d.startDate); }); //TODO
+	var volumeOverDayGroup = volumeOverDay.group().reduceCount();
+
+	//month
+	var volumeOverMonth = mdx.dimension(function (d) { return d3.time.month(d.startDate); }); //TODO
+	var volumeOverMonthGroup = volumeOverMonth.group().reduceCount();
+
+	//hour
+	var volumeOverHour = mdx.dimension(function (d) { return d3.time.hour(d.startDate); }); //TODO
+	var volumeOverHourGroup = volumeOverHour.group().reduceCount();
+
+	var barChart = dc.barChart("#gender-bar-chart")
+	    .width(450) // (optional) define chart width, :default = 200
+	    .height(250) // (optional) define chart height, :default = 200
+	    .transitionDuration(500) // (optional) define chart transition duration, :default = 500
+	    // (optional) define margins
+	    .margins({top: 10, right: 50, bottom: 30, left: 100})
+	    .dimension(volumeByGender) // set dimension
+	    .group(volumeByGenderGroup) // set group
+	    // (optional) whether chart should rescale y axis to fit data, :default = false
+	    //.elasticY(true)
+	    // (optional) when elasticY is on whether padding should be applied to y axis domain, :default=0
+	    //.yAxisPadding(0)
+	    // (optional) whether chart should rescale x axis to fit data, :default = false
+	    .elasticX(true)
+	    // (optional) when elasticX is on whether padding should be applied to x axis domain, :default=0
+	    .xAxisPadding(100)
+	    .x(d3.scale.ordinal().domain(["j", "female", "male", "unknown"]))  //hack with extra, empty x scale ordinal value - empty value pushes other values to the right
+	    .xUnits(dc.units.ordinal)
+	    .centerBar(true)
+	    // (optional) set gap between bars manually in px, :default=2
+	    .gap(7);
+    
+	var rowChart = dc.rowChart("#gender-row-chart")
+	    .width(180) // (optional) define chart width, :default = 200
+	    .height(180) // (optional) define chart height, :default = 200
+	    .group(volumeByGenderGroup) // set group
+	    .dimension(volumeByGender) // set dimension
+	    // (optional) define margins
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    // (optional) define color array for slices
+	    .colors(['#3182bd', '#6baed6', '#9ecae1', '#c6dbef', '#dadaeb'])
+	    // (optional) set gap between rows, default is 5
+	    .gap(7)
+	    // (optional) set x offset for labels, default is 10
+	    .labelOffsetX(5)
+	    // (optional) set y offset for labels, default is 15
+	    .labelOffsetY(10)
+	    // (optional) whether chart should render labels, :default = true
+	    .renderLabel(true)
+	    // (optional) by default row chart will use group.key and group.value as its title
+	    // you can overwrite it with a closure
+	    //.title(function(d) { return d.data.key + "(" + Math.floor(d.data.value / all.value() * 100) + "%)"; })
+	    // (optional) whether chart should render titles, :default = false
+	    .renderTitle(true)
+	    // (optional) specify the number of ticks for the X axis
+	    .xAxis().ticks(4);
+
+	var barChart = dc.barChart("#timeline-day-chart")
+	    .width(1000) // (optional) define chart width, :default = 200
+	    .height(400) // (optional) define chart height, :default = 200
+	    .transitionDuration(500) // (optional) define chart transition duration, :default = 500
+	    // (optional) define margins
+	    .margins({top: 10, right: 50, bottom: 30, left: 100})
+	    .dimension(volumeOverDay) // set dimension
+	    .group(volumeOverDayGroup) // set group
+	    // (optional) whether chart should rescale y axis to fit data, :default = false
+	    //.elasticY(true)
+	    // (optional) when elasticY is on whether padding should be applied to y axis domain, :default=0
+	    //.yAxisPadding(0)
+	    // (optional) whether chart should rescale x axis to fit data, :default = false
+	    .elasticX(true)
+	    // (optional) when elasticX is on whether padding should be applied to x axis domain, :default=0
+	    .xAxisPadding(100)
+	    .x(d3.time.scale().domain([new Date(2010, 0, 1), new Date(2013, 6, 30)]))  //hack with extra, empty x scale ordinal value - empty value pushes other values to the right
+	    //.xUnits()
+	    .centerBar(true)
+	    // (optional) set gap between bars manually in px, :default=2
+	    .gap(1);
+
+	 var barChart = dc.barChart("#timeline-month-chart")
+	    .width(1000) // (optional) define chart width, :default = 200
+	    .height(400) // (optional) define chart height, :default = 200
+	    .transitionDuration(500) // (optional) define chart transition duration, :default = 500
+	    // (optional) define margins
+	    .margins({top: 10, right: 50, bottom: 30, left: 100})
+	    .dimension(volumeOverMonth) // set dimension
+	    .group(volumeOverMonthGroup) // set group
+	    // (optional) whether chart should rescale y axis to fit data, :default = false
+	    //.elasticY(true)
+	    // (optional) when elasticY is on whether padding should be applied to y axis domain, :default=0
+	    //.yAxisPadding(0)
+	    // (optional) whether chart should rescale x axis to fit data, :default = false
+	    .elasticX(true)
+	    // (optional) when elasticX is on whether padding should be applied to x axis domain, :default=0
+	    .xAxisPadding(100)
+	    .x(d3.time.scale().domain([new Date(2010, 0, 1), new Date(2013, 6, 30)]))  //hack with extra, empty x scale ordinal value - empty value pushes other values to the right
+	    //.xUnits()
+	    .centerBar(true)
+	    // (optional) set gap between bars manually in px, :default=2
+	    .gap(0.5);
+
+	 var barChart = dc.barChart("#timeline-hour-chart")
+	    .width(1000) // (optional) define chart width, :default = 200
+	    .height(400) // (optional) define chart height, :default = 200
+	    .transitionDuration(500) // (optional) define chart transition duration, :default = 500
+	    // (optional) define margins
+	    .margins({top: 10, right: 50, bottom: 30, left: 100})
+	    .dimension(volumeOverHour) // set dimension
+	    .group(volumeOverHourGroup) // set group
+	    // (optional) whether chart should rescale y axis to fit data, :default = false
+	    //.elasticY(true)
+	    // (optional) when elasticY is on whether padding should be applied to y axis domain, :default=0
+	    //.yAxisPadding(0)
+	    // (optional) whether chart should rescale x axis to fit data, :default = false
+	    .elasticX(true)
+	    // (optional) when elasticX is on whether padding should be applied to x axis domain, :default=0
+	    .xAxisPadding(100)
+	    .x(d3.time.scale().domain([new Date(2010, 0, 1), new Date(2013, 6, 30)]))  //hack with extra, empty x scale ordinal value - empty value pushes other values to the right
+	    //.xUnits()
+	    .centerBar(true)
+	    // (optional) set gap between bars manually in px, :default=2
+	    .gap(2);
+
+	dc.renderAll();
+	
+
+	//GANTT CHART
+	tasks.sort(function(a, b) {
+	    return a.endDate - b.endDate;
+	});
+	var maxDate = tasks[tasks.length - 1].endDate;
+	tasks.sort(function(a, b) {
+	    return a.startDate - b.startDate;
+	});
+	var minDate = tasks[0].startDate;
+
+	var format = "%H:%M";
+
+	var gantt = d3.gantt().taskTypes(taskNameList).taskStatus(taskStatus).tickFormat(format);
+	//gantt(tasks);
+
+	function filterby(value) {
+		
+		if(value != 'ALL'){
+			var list = tasks.filter( function (task) { return task.status == value; } );
+			console.log(list);
+			var div = document.getElementById('gantt');
+			div.innerHTML = null;
+			gantt(list);
+		}
+		else{
+			var list = tasks;
+			console.log(list);
+			var div = document.getElementById('gantt');
+			div.innerHTML = null;
+			gantt(list);
+		}
+	}
+
+} );
+</script>
+</body>
+</html>
