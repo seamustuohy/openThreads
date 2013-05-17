@@ -4,7 +4,7 @@
 
 .dc-chart rect.bar {
     stroke: none;
-    fill: steelblue;
+    fill: #352e5a;
 }
 
 .dc-chart rect.bar:hover {
