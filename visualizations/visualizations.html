@@ -9,15 +9,32 @@
 <script type="text/javascript" src="js/gantt-chart-d3.js"></script>
 
 <style type="text/css">
-@import url("css/dc.css");
-@import url("css/gantt.css");
+@import url("css/openthreads.css");
 </style>
 
 </head>
 <body>
+<a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
 <div id="gender-row-chart">
     <!-- Title or anything you want to add above the chart -->
     <span>Messages By Gender</span>
+    <!--
+        if a link with css class "reset" is present then the chart
+        will automatically turn it on/off based on whether there is filter
+        set on this chart (slice selection for pie chart and brush
+        selection for bar chart)
+     -->
+    <a class="reset" href="javascript:rowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+    <!--
+        dc.js will also automatically inject applied current filter value into
+        any html element with css class set to "filter"
+    -->
+    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+    <br>
+</div> <br />
+<div id="msgtype-row-chart">
+    <!-- Title or anything you want to add above the chart -->
+    <span>Messages By Type</span>
     <!--
         if a link with css class "reset" is present then the chart
         will automatically turn it on/off based on whether there is filter
@@ -66,13 +83,13 @@
 d3.json("data/messages.json", function(data) { 
 	console.log("load json");
  
-	var tasks = data.rows.map(function (row) {
+	var messagesData = data.rows.map(function (row) {
 		//console.log(row.value);
 		if (typeof row.value.threadID !== 'string') throw new Error("unexpected type");
 		return {
 			'startDate': new Date(row.value.date),
 			'endDate': new Date(new Date(row.value.date).getTime() + row.value.minutes*60*1000),
-			'taskName': row.value.threadID,
+			'threadName': row.value.threadID,
 			'gender': row.value.gender,
 			'status': row.value.gender,
 			'list': row.value.list,
@@ -81,28 +98,26 @@ d3.json("data/messages.json", function(data) {
 		};
 
 	 });
-	tasks = tasks.slice(1, 5);
-	var mdx = crossfilter(tasks);	
+	//tasks = tasks.slice(1, 5);
+	var mdx = crossfilter(messagesData);	
 	// define group all for counting
 	var all = mdx.groupAll();
 
-	//FILTER GROUPING
-	var taskStatus = {
-   	 "women" : "bar",
-   	 "unknown" : "bar-failed",
-   	 "men" : "bar-running",
-	};
 
 	//THREAD grouping
-	var taskNames = mdx.dimension(function (d) {
-		return d.taskName;
+	var threadNames = mdx.dimension(function (d) {
+		return d.threadName;
 	});
 	
-	var taskNameList = taskNames.group().all();
+	var threadNameList = threadNames.group().all();
 
 	// define a dimension on gender
 	var volumeByGender = mdx.dimension(function (d) { return d.gender; });
 	var volumeByGenderGroup = volumeByGender.group().reduceCount();
+
+	// define a dimension on gender
+	var volumeByMsgType = mdx.dimension(function (d) { return d.msgType; });
+	var volumeByMsgTypeGroup = volumeByMsgType.group().reduceCount();
 
 	//day
 	var volumeOverDay = mdx.dimension(function (d) { return d3.time.day(d.startDate); }); //TODO
@@ -144,9 +159,36 @@ d3.json("data/messages.json", function(data) {
 	    .group(volumeByGenderGroup) // set group
 	    .dimension(volumeByGender) // set dimension
 	    // (optional) define margins
+	    .turnOnControls()
 	    .margins({top: 20, left: 10, right: 10, bottom: 20})
 	    // (optional) define color array for slices
-	    .colors(['#3182bd', '#6baed6', '#9ecae1', '#c6dbef', '#dadaeb'])
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
+	    // (optional) set gap between rows, default is 5
+	    .gap(7)
+	    // (optional) set x offset for labels, default is 10
+	    .labelOffsetX(5)
+	    // (optional) set y offset for labels, default is 15
+	    .labelOffsetY(10)
+	    // (optional) whether chart should render labels, :default = true
+	    .renderLabel(true)
+	    // (optional) by default row chart will use group.key and group.value as its title
+	    // you can overwrite it with a closure
+	    //.title(function(d) { return d.data.key + "(" + Math.floor(d.data.value / all.value() * 100) + "%)"; })
+	    // (optional) whether chart should render titles, :default = false
+	    .renderTitle(true)
+	    // (optional) specify the number of ticks for the X axis
+	    .xAxis().ticks(4);
+
+	var rowChart = dc.rowChart("#msgtype-row-chart")
+	    .width(180) // (optional) define chart width, :default = 200
+	    .height(180) // (optional) define chart height, :default = 200
+	    .group(volumeByMsgTypeGroup) // set group
+	    .dimension(volumeByMsgType) // set dimension
+	    // (optional) define margins
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .turnOnControls()
+	    // (optional) define color array for slices
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
 	    // (optional) set gap between rows, default is 5
 	    .gap(7)
 	    // (optional) set x offset for labels, default is 10
@@ -169,6 +211,7 @@ d3.json("data/messages.json", function(data) {
 	    .transitionDuration(500) // (optional) define chart transition duration, :default = 500
 	    // (optional) define margins
 	    .margins({top: 10, right: 50, bottom: 30, left: 100})
+	    .turnOnControls()
 	    .dimension(volumeOverDay) // set dimension
 	    .group(volumeOverDayGroup) // set group
 	    // (optional) whether chart should rescale y axis to fit data, :default = false
@@ -191,6 +234,7 @@ d3.json("data/messages.json", function(data) {
 	    .transitionDuration(500) // (optional) define chart transition duration, :default = 500
 	    // (optional) define margins
 	    .margins({top: 10, right: 50, bottom: 30, left: 100})
+	    .turnOnControls()
 	    .dimension(volumeOverMonth) // set dimension
 	    .group(volumeOverMonthGroup) // set group
 	    // (optional) whether chart should rescale y axis to fit data, :default = false
@@ -213,6 +257,7 @@ d3.json("data/messages.json", function(data) {
 	    .transitionDuration(500) // (optional) define chart transition duration, :default = 500
 	    // (optional) define margins
 	    .margins({top: 10, right: 50, bottom: 30, left: 100})
+	    .turnOnControls()
 	    .dimension(volumeOverHour) // set dimension
 	    .group(volumeOverHourGroup) // set group
 	    // (optional) whether chart should rescale y axis to fit data, :default = false
@@ -233,14 +278,14 @@ d3.json("data/messages.json", function(data) {
 	
 
 	//GANTT CHART
-	tasks.sort(function(a, b) {
+	messagesData.sort(function(a, b) {
 	    return a.endDate - b.endDate;
 	});
-	var maxDate = tasks[tasks.length - 1].endDate;
-	tasks.sort(function(a, b) {
+	var maxDate = messagesData[messagesData.length - 1].endDate;
+	messagesData.sort(function(a, b) {
 	    return a.startDate - b.startDate;
 	});
-	var minDate = tasks[0].startDate;
+	var minDate = messagesData[0].startDate;
 
 	var format = "%H:%M";
 

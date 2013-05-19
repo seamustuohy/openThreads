@@ -1,3 +1,44 @@
+//page & gantt css
+html,body,#gantt,#wrapper {
+  width: 100%;
+  height: 100%;
+  margin:  0px;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+  
+.chart {
+  font-family: sans-serif;
+  font-size: 10px;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: #33b5e5;
+}
+  
+.bar-failed {
+  fill: #CC0000;
+}
+  
+.bar-running {
+  fill: #669900;
+}
+  
+.bar-succeeded {
+  fill: #33b5e5;
+}
+.bar-killed {
+  fill: #ffbb33;
+}
+
+
+// dcjs css 
 .dc-chart {
     float: left;
 }
@@ -75,7 +116,7 @@
 }
 
 .dc-chart .brush rect.extent {
-    fill: steelblue;
+    fill: #352e5a;
     fill-opacity: .125;
 }
 
@@ -86,12 +127,12 @@
 
 .dc-chart path.line {
     fill: none;
-    stroke: steelblue;
+    stroke: #352e5a;
     stroke-width: 1.5px;
 }
 
 .dc-chart circle.dot{
-    fill: steelblue;
+    fill: #352e5a;
 }
 
 .dc-chart g.stack1 path.line {
@@ -117,7 +158,7 @@
 }
 
 .dc-chart path.area {
-    fill: steelblue;
+    fill: #352e5a;
     fill-opacity: .3;
     stroke: none;
 }
@@ -206,7 +247,7 @@
 }
 
 .dc-chart g.debug rect{
-    fill: blue;
+    fill: #f68028;
     fill-opacity: .2;
 }
 
@@ -220,6 +261,6 @@
 }
 
 .dc-chart g.row text {
-    fill: white;
+    fill: black;
     font-size: 12px;
 }
