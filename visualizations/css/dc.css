@@ -1,44 +1,10 @@
-//page & gantt css
-html,body,#gantt,#wrapper {
-  width: 100%;
-  height: 100%;
-  margin:  0px;
+html,body {
   font-family: sans-serif;
   font-size: 14px;
-}
-  
-.chart {
-  font-family: sans-serif;
-  font-size: 10px;
+  display: inline-block;
+  margin-top: 5px;
 }
 
-.axis path, .axis line {
-  fill: none;
-  stroke: #000;
-  shape-rendering: crispEdges;
-}
-
-.bar {
-  fill: #33b5e5;
-}
-  
-.bar-failed {
-  fill: #CC0000;
-}
-  
-.bar-running {
-  fill: #669900;
-}
-  
-.bar-succeeded {
-  fill: #33b5e5;
-}
-.bar-killed {
-  fill: #ffbb33;
-}
-
-
-// dcjs css 
 .dc-chart {
     float: left;
 }
@@ -199,7 +165,6 @@ html,body,#gantt,#wrapper {
 
 .dc-data-count {
     float: right;
-    margin-top: 15px;
     margin-right: 15px;
 }
 
