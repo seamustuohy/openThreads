@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset="utf-8"/>
+<title>openThreads Visualizations</title>
+<script src="js/d3.v3.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/dc.js"></script>
+<script type="text/javascript" src="js/crossfilter.min.js"></script>
+<script type="text/javascript" src="js/gantt-chart-d3.js"></script>
+<script type="text/javascript" src="js/underscore.js"></script>
+
+
+<style type="text/css" rel="stylesheet">
+	@import	url("css/bootstrap.min.css");
+	@import url("css/dc.css");
+	@import url("css/gantt.css");
+</style>
+
+</head>
+
+<body>
+
+	
+<script type="text/javascript">
+//participant data
+d3.json("data/participants.json"), function(pdata){
+	console.log("load participant json");
+
+	var participantsData = pdata.rows.map(function (row) {
+		//console.log(row.value);
+		if (typeof row.value.name !== 'string') throw new Error("unexpected type");
+		return {
+			'controlMetric':row.value.control,
+			'totalPosts':row.value.totalPosts,
+			'joinedList': new Date(row.value.entryTime),
+			'averageRepliesMetric':row.value.averageReplies,
+			'lastPost': new Date(row.value.lastPost),
+			'responseMetric':row.value.response,
+			'starterMetric':row.value.starter,
+			'pname':row.value.name,
+			'gender':row.value.gender,
+			'engagementMetric':row.value.engagement,
+			'list':row.value.list,
+			'minutesSpent':row.value.timeSpent
+		};
+
+	 });
+	//crossfiler for participants
+	var pdx = crossfilter(participantsData);
+	// define group all for counting
+	var pall = pdx.groupAll();
+
+	//top participants
+	var allParticipants = pdx.dimension(function (d) { return d.pname; });
+	var topParticipantsGroup = allParticipants.top(50);
+
+	var participantsByGender = pdx.dimension(function (d) {return d.gender;});
+	var participantsByGenderGroup = participantsByGender.group().reduceCount();
+
+	participantGenderRowChart.width(150) // (optional) define chart width, :default = 200
+	    .height(180) // (optional) define chart height, :default = 200
+	    .group(participantsByGenderGroup) // set group
+	    .dimension(participantsByGender) // set dimension
+	    .turnOnControls()
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
+	    .gap(7)
+	    .labelOffsetX(5)
+	    .labelOffsetY(10)
+	    .renderLabel(true)
+	    .renderTitle(true)
+	    .xAxis().ticks(4);
+	 participantGenderRowChart.on("filtered", function (chart, filter) { genderRowChart.filter(filter); });
+
+	topParticipantsBarChart.width(300) // (optional) define chart width, :default = 200
+	    .height(5000) // (optional) define chart height, :default = 200
+	    .group(topParticipantsGroup) // set group
+	    .dimension(allParticipants) // set dimension
+	    .turnOnControls()
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
+	    .gap(7)
+	    .labelOffsetX(5)
+	    .labelOffsetY(10)
+	    .renderLabel(false)
+	    .renderTitle(true)
+	    .xAxis().ticks(7);
+
+	topParticipantsBubbleChart.width(990)
+        .height(300)
+        .margins({top: 10, right: 50, bottom: 30, left: 60})
+        .dimension(allParticipants)
+        .group(topParticipantsGroup)
+        .colorDomain(d3.scale.ordinal().domain(["female", "male", "unknown"]))
+        .colors(['#352e5a', '#f68028', '#a3b746'])
+        .colorAccessor(function (d) { return d.gender; })
+        .keyAccessor(function (p) { return p.value; })
+        .valueAccessor(function (p) { return p.value; })
+        .radiusValueAccessor(function (p) { return p.value * 0.5; })
+        .x(d3.scale.linear().domain([0, 100]))
+        .y(d3.scale.ordinal().domain(["female", "male", "unknown"]).range([0, 500, 1000]))
+        //.y(d3.scale.linear().domain([0,1000]))
+        .r(d3.scale.linear().domain([0, 1000]))
+        .yAxisPadding(10)
+        .elasticX(true)
+        .elasticY(true)
+        .xAxisPadding(10)
+        .maxBubbleRelativeSize(0.1)
+        .renderHorizontalGridLines(true)
+        .renderVerticalGridLines(true)
+        .renderLabel(false)
+        .renderTitle(true);
+		//.yAxis().tickFormat()
+		//.yAxis().tickValues(["female", "male", "unknown"]);
+
+        topParticipantsBubbleChart.xAxis().tickFormat(function (s) {
+           return s + " messages";
+        });
+}
+</script>
+
+</body>
+</html>
