@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset="utf-8"/>
+<title>Postgis-Dev Visualizations</title>
+<script src="js/d3.v3.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/dc.js"></script>
+<script type="text/javascript" src="js/crossfilter.min.js"></script>
+<script type="text/javascript" src="js/gantt-chart-d3.js"></script>
+<script type="text/javascript" src="js/underscore.js"></script>
+
+
+<style type="text/css" rel="stylesheet">
+	@import	url("css/bootstrap.min.css");
+	@import url("css/dc.css");
+	@import url("css/gantt.css");
+</style>
+
+</head>
+<body>
+<span style="font-weight: bold; font-size:24px; float:left;">List: Postgis-Dev</span> <br>
+<!-- <div class="dc-data-count dc-chart"> 
+	<span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+</div> -->
+
+<div id="allcharts">
+	<br><br>
+	<div id="timeline-day-chart">
+	    <span id="charttitle">Messages By Day</span>
+	    <a class="reset" href="javascript:timelineBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+<!-- 	<div id="participant-gender-row-chart">
+	    <span>Participants By Gender</span>
+	    <a class="reset" href="javascript:participantGenderRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	</div> -->
+
+	<br>
+
+	<div id="gender-row-chart" style="height:200px;">
+	    <span id="charttitle">Messages By Gender</span>
+	    <a class="reset" href="javascript:genderRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+	<br>
+
+	<div id="msgtype-row-chart">
+	    <span id="charttitle">Messages By Type</span>
+	    <a class="reset" href="javascript:msgRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+	<br><br>
+
+	<div id="top-participant-chart">
+	    <span id="charttitle">Top Participants By Messages</span>
+	    <a class="reset" href="javascript:topParticipantsBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+	<br>
+
+</div>
+
+<div id="gantt"> </div>
+
+<script type="text/javascript" >
+var genderRowChart = dc.rowChart("#gender-row-chart");
+var participantGenderRowChart = dc.rowChart("#participant-gender-row-chart");
+var msgRowChart = dc.rowChart("#msgtype-row-chart");
+var timelineBarChart = dc.barChart("#timeline-day-chart");
+var barChart1 = dc.barChart("#gender-bar-chart");
+var topParticipantsBarChart = dc.rowChart("#top-participant-chart");
+var topParticipantsBubbleChart = dc.bubbleChart("#top-participant-bubble-chart");
+
+
+
+d3.json("data/messages-postgisdev.json", function(mdata) { 
+    console.log("load messages json");
+
+    //participant data
+    d3.json("data/participants.json", function(pdata) {
+        console.log("load participant json");
+        renderMyCharts(mdata, pdata);
+        //whut
+    });
+});
+
+function renderMyCharts(messageData, participantData) {
+
+    //dc.js code goes here
+}
+</script>
+</body>
+</html>

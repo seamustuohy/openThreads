@@ -17,15 +17,53 @@
 </style>
 
 </head>
-
 <body>
+<span style="font-weight: bold; font-size:24px; float:left;">List: Talk-US</span> <br>
+<!-- <div class="dc-data-count dc-chart"> 
+	<span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+</div> -->
 
+<div id="allcharts">
+	<br><br>
 	
-<script type="text/javascript">
-//participant data
-d3.json("data/participants.json"), function(pdata){
-	console.log("load participant json");
+	<br>
+	<div id="top-50-participant-chart">
+	    <span id="charttitle">Top 50 Participants By Messages</span>
+	    <a class="reset" href="javascript:top50ParticipantsBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
 
+</div>
+
+
+<script type="text/javascript" >
+var top50ParticipantsBarChart = dc.rowChart("top-50-partiicpant-chart");
+
+
+function renderMyCharts(mdata, pdata) {
+
+	var messagesData = mdata.rows.map(function (row) {
+		//console.log(row.value);
+		if (typeof row.value.msgID !== 'string') throw new Error("unexpected type");
+		return {
+			'startDate': new Date(row.value.date),
+			'endDate': new Date(new Date(row.value.date).getTime() + row.value.minutes*60*1000),
+			'threadName': row.value.threadID,
+			'gender': row.value.gender,
+			'status': row.value.gender,
+			'list': row.value.list,
+			'msgType': row.value.msgType,
+			'participant':row.value.participantID
+		};
+
+	 });
+	//messageData crossfilter
+	var mdx = crossfilter(messagesData);
+	// define group all for counting
+	var all = mdx.groupAll();
+
+	//participant Data
 	var participantsData = pdata.rows.map(function (row) {
 		//console.log(row.value);
 		if (typeof row.value.name !== 'string') throw new Error("unexpected type");
@@ -37,7 +75,7 @@ d3.json("data/participants.json"), function(pdata){
 			'lastPost': new Date(row.value.lastPost),
 			'responseMetric':row.value.response,
 			'starterMetric':row.value.starter,
-			'pname':row.value.name,
+			'name':row.value.name,
 			'gender':row.value.gender,
 			'engagementMetric':row.value.engagement,
 			'list':row.value.list,
@@ -50,17 +88,31 @@ d3.json("data/participants.json"), function(pdata){
 	// define group all for counting
 	var pall = pdx.groupAll();
 
+
 	//top participants
-	var allParticipants = pdx.dimension(function (d) { return d.pname; });
-	var topParticipantsGroup = allParticipants.top(50);
+	var participantByPosts = pdx.dimension(function (d) { return d.totalPosts; });
+	//var participantByPostsGroup = participantByPosts.group().reduceCount();
 
-	var participantsByGender = pdx.dimension(function (d) {return d.gender;});
-	var participantsByGenderGroup = participantsByGender.group().reduceCount();
+	
+	var top50participants = participantByPosts.top(50);
 
-	participantGenderRowChart.width(150) // (optional) define chart width, :default = 200
-	    .height(180) // (optional) define chart height, :default = 200
-	    .group(participantsByGenderGroup) // set group
-	    .dimension(participantsByGender) // set dimension
+	var top50list = crossfilter(top50participants); 
+	var top50listGroup = top50list.groupAll();
+	
+	var top50participants2 = top50list.dimension( function (d) { return d.name;});
+
+	console.log(top50participants2.top(50));
+	//console.log(top50listGroup);
+
+
+	var top50participantsGroup = participantByPosts.top(50);
+	//console.log(top50participants);
+
+	
+	top50ParticipantsBarChart.width(300) // (optional) define chart width, :default = 200
+	    .height(5000) // (optional) define chart height, :default = 200
+	    .group(top50participantsGroup) // set group
+	    .dimension(top50participants) // set dimension
 	    .turnOnControls()
 	    .margins({top: 20, left: 10, right: 10, bottom: 20})
 	    .colors(['#352e5a', '#f68028', '#a3b746'])
@@ -69,55 +121,20 @@ d3.json("data/participants.json"), function(pdata){
 	    .labelOffsetY(10)
 	    .renderLabel(true)
 	    .renderTitle(true)
-	    .xAxis().ticks(4);
-	 participantGenderRowChart.on("filtered", function (chart, filter) { genderRowChart.filter(filter); });
-
-	topParticipantsBarChart.width(300) // (optional) define chart width, :default = 200
-	    .height(5000) // (optional) define chart height, :default = 200
-	    .group(topParticipantsGroup) // set group
-	    .dimension(allParticipants) // set dimension
-	    .turnOnControls()
-	    .margins({top: 20, left: 10, right: 10, bottom: 20})
-	    .colors(['#352e5a', '#f68028', '#a3b746'])
-	    .gap(7)
-	    .labelOffsetX(5)
-	    .labelOffsetY(10)
-	    .renderLabel(false)
-	    .renderTitle(true)
 	    .xAxis().ticks(7);
 
-	topParticipantsBubbleChart.width(990)
-        .height(300)
-        .margins({top: 10, right: 50, bottom: 30, left: 60})
-        .dimension(allParticipants)
-        .group(topParticipantsGroup)
-        .colorDomain(d3.scale.ordinal().domain(["female", "male", "unknown"]))
-        .colors(['#352e5a', '#f68028', '#a3b746'])
-        .colorAccessor(function (d) { return d.gender; })
-        .keyAccessor(function (p) { return p.value; })
-        .valueAccessor(function (p) { return p.value; })
-        .radiusValueAccessor(function (p) { return p.value * 0.5; })
-        .x(d3.scale.linear().domain([0, 100]))
-        .y(d3.scale.ordinal().domain(["female", "male", "unknown"]).range([0, 500, 1000]))
-        //.y(d3.scale.linear().domain([0,1000]))
-        .r(d3.scale.linear().domain([0, 1000]))
-        .yAxisPadding(10)
-        .elasticX(true)
-        .elasticY(true)
-        .xAxisPadding(10)
-        .maxBubbleRelativeSize(0.1)
-        .renderHorizontalGridLines(true)
-        .renderVerticalGridLines(true)
-        .renderLabel(false)
-        .renderTitle(true);
-		//.yAxis().tickFormat()
-		//.yAxis().tickValues(["female", "male", "unknown"]);
+};
 
-        topParticipantsBubbleChart.xAxis().tickFormat(function (s) {
-           return s + " messages";
-        });
-}
+d3.json("data/messages-talkus.json", function(mdata) { 
+    console.log("load messages json");
+
+    //participant data
+    d3.json("data/participants.json", function(pdata) {
+        console.log("load participant json");
+        renderMyCharts(mdata, pdata);
+    });
+});
+
 </script>
-
 </body>
 </html>
