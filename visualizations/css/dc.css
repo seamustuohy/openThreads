@@ -1,8 +1,22 @@
 html,body {
   font-family: sans-serif;
   font-size: 14px;
-  display: inline-block;
+  display: block;
   margin-top: 5px;
+  width: 800px;
+}
+
+.allcharts {
+    float: left;
+    width: 750px;
+    display: block;
+}
+
+#charttitle {
+    font-weight: bolder;
+    position: relative;
+    top: 5px;
+
 }
 
 .dc-chart {
@@ -164,7 +178,7 @@ html,body {
 }
 
 .dc-data-count {
-    float: right;
+    float: left;
     margin-right: 15px;
 }
 

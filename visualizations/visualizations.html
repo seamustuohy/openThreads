@@ -18,62 +18,64 @@
 
 </head>
 <body>
-<span style="font-weight: bold; font-size:24px;">List: Talk-US</span> <div class="dc-data-count dc-chart"> <span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a></div>
+<span style="font-weight: bold; font-size:24px; float:left;">List: Talk-US</span> <br>
+<div class="dc-data-count dc-chart"> 
+	<span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
 </div>
 
-<div id="participant-gender-row-chart">
-    <span>Participants By Gender</span>
-    <a class="reset" href="javascript:participantGenderRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
-    <div class="clearfix"></div>
-<br />
-</div>
+<div id="allcharts">
+	<br><br>
+	<div id="timeline-day-chart">
+	    <span id="charttitle">Messages By Day</span>
+	    <a class="reset" href="javascript:timelineBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	</div>
 
+<!-- 	<div id="participant-gender-row-chart">
+	    <span>Participants By Gender</span>
+	    <a class="reset" href="javascript:participantGenderRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	</div> -->
 
-<div id="gender-row-chart">
-    <span>Messages By Gender</span>
-    <a class="reset" href="javascript:genderRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
-    <div class="clearfix"></div>
-<br />
-</div>
-<div id="msgtype-row-chart">
-    <span>Messages By Type</span>
-    <a class="reset" href="javascript:msgRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
- <br />
-</div>
-<div id="top-participant-bubble-chart">
-    <span>Top Participants By Messages Bubbles</span>
-    <a class="reset" href="javascript:topParticipantsBubbleChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
-    <br>
-</div><br />
-<br />
-<div id="top-participant-chart">
-    <span>Top Participants By Messages</span>
-    <a class="reset" href="javascript:topParticipantsBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
-    <br>
-</div><br />
-<br />
-<div id="timeline-day-chart">
-    <span>Messages By Day</span>
-    <a class="reset" href="javascript:timelineBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
-    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
-    <br>
+	<br>
+
+	<div id="gender-row-chart" style="height:200px;">
+	    <span id="charttitle">Messages By Gender</span>
+	    <a class="reset" href="javascript:genderRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	</div>
+
+	<br>
+
+	<div id="msgtype-row-chart">
+	    <span id="charttitle">Messages By Type</span>
+	    <a class="reset" href="javascript:msgRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	</div>
+
+	<br><br>
+
+	<div id="top-participant-chart">
+	    <span id="charttitle">Top Participants By Messages</span>
+	    <a class="reset" href="javascript:topParticipantsBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+	<br>
+
 </div>
 
 <div id="gantt"> </div>
 
 <script type="text/javascript" >
-var genderRowChart = dc.rowChart("#gender-row-chart", "messageVizes");
+var genderRowChart = dc.rowChart("#gender-row-chart");
 var participantGenderRowChart = dc.rowChart("#participant-gender-row-chart");
-var msgRowChart = dc.rowChart("#msgtype-row-chart", "messageVizes");
-var timelineBarChart = dc.barChart("#timeline-day-chart", "messageVizes");
-var barChart1 = dc.barChart("#gender-bar-chart", "messageVizes");
-var topParticipantsBarChart = dc.rowChart("#top-participant-chart", "messageVizes");
-var topParticipantsBubbleChart = dc.bubbleChart("#top-participant-bubble-chart", "messageVizes");
+var msgRowChart = dc.rowChart("#msgtype-row-chart");
+var timelineBarChart = dc.barChart("#timeline-day-chart");
+var barChart1 = dc.barChart("#gender-bar-chart");
+var topParticipantsBarChart = dc.rowChart("#top-participant-chart");
+var topParticipantsBubbleChart = dc.bubbleChart("#top-participant-bubble-chart");
 
 
 
@@ -128,22 +130,23 @@ d3.json("data/messages-talkus.json", function(mdata) {
 	//messages by gender
 	var messagesByParticipant = mdx.dimension(function(d) { return d.participant;});
 	var messagesByParticipantGroup = messagesByParticipant.group().reduce(
-    //add function
-    function(p,v) {
-    	// since grouped by participant, always return gender here 
-        return v.gender; 
-    }, 
-    //remove function
-    function(p,v) { 
-    	return undefined; 
-    },
-    //initial value 
-    function() { 
-    	return undefined;  
-    }).all();
+	    //add function
+	    function(p,v) {
+	    	// since grouped by participant, always return gender here 
+	        return v.gender; 
+	    }, 
+	    //remove function
+	    function(p,v) { 
+	    	return undefined; 
+	    },
+	    //initial value 
+	    function() { 
+	    	return undefined;  
+	    }).all();
 
 	// make the returned data structure have relevant names
 	messagesByParticipantGroup = messagesByParticipantGroup.map(function(_) { return {'participant': _.key, 'gender': _.value }; });
+	console.log(messagesByParticipantGroup);
 
 	
 	// define a dimension on gender
@@ -220,6 +223,7 @@ d3.json("data/messages-talkus.json", function(mdata) {
 	    .centerBar(true)
 	    .gap(1);
 
+
 	 topParticipantsBarChart.width(300) // (optional) define chart width, :default = 200
 	    .height(5000) // (optional) define chart height, :default = 200
 	    .group(messagesByParticipantGroup) // set group
@@ -250,19 +254,6 @@ d3.json("data/messages-talkus.json", function(mdata) {
 	    .xAxis().ticks(4);
 	 participantGenderRowChart.on("filtered", function (chart, filter) { genderRowChart.filter(filter); });
 
-	topParticipantsBarChart.width(300) // (optional) define chart width, :default = 200
-	    .height(5000) // (optional) define chart height, :default = 200
-	    .group(topParticipantsGroup) // set group
-	    .dimension(allParticipants) // set dimension
-	    .turnOnControls()
-	    .margins({top: 20, left: 10, right: 10, bottom: 20})
-	    .colors(['#352e5a', '#f68028', '#a3b746'])
-	    .gap(7)
-	    .labelOffsetX(5)
-	    .labelOffsetY(10)
-	    .renderLabel(false)
-	    .renderTitle(true)
-	    .xAxis().ticks(7);
 
 	topParticipantsBubbleChart.width(990)
         .height(300)
@@ -295,8 +286,45 @@ d3.json("data/messages-talkus.json", function(mdata) {
            return s + " messages";
         });
 
-	dc.dataCount(".dc-data-count").dimension(mdx).group(all);
-	dc.renderAll("messageVizes");
+        //CODE FOR THE COORDINATE CHART
+        // monthly index avg fluctuation in percentage
+     	/*
+        var moveMonths = ndx.dimension(function (d) {
+            return d.month;
+        });
+        var monthlyMoveGroup = moveMonths.group().reduceSum(function (d) {
+            return Math.abs(+d.close - +d.open);
+        });
+        var volumeByMonthGroup = moveMonths.group().reduceSum(function (d) {
+            return d.volume / 500000;
+        });
+        var indexAvgByMonthGroup = moveMonths.group().reduce(
+                function (p, v) {
+                    ++p.days;
+                    p.total += (+v.open + +v.close) / 2;
+                    p.avg = Math.round(p.total / p.days);
+                    return p;
+                },
+                function (p, v) {
+                    --p.days;
+                    p.total -= (+v.open + +v.close) / 2;
+                    p.avg = p.days == 0 ? 0 : Math.round(p.total / p.days);
+                    return p;
+                },
+                function () {
+                    return {days: 0, total: 0, avg: 0};
+                }
+        );
+*/
+
+
+
+	dc.dataCount(".dc-data-count")
+		.dimension(mdx)
+		.group(all);
+
+
+	dc.renderAll();
 
 	
 	//GANTT CHART
