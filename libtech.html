@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset="utf-8"/>
+<title>openThreads Visualizations</title>
+<script src="js/d3.v3.js" charset="utf-8"></script>
+<script type="text/javascript" src="js/dc.js"></script>
+<script type="text/javascript" src="js/crossfilter.min.js"></script>
+<script type="text/javascript" src="js/gantt-chart-d3.js"></script>
+<script type="text/javascript" src="js/underscore.js"></script>
+
+
+<style type="text/css" rel="stylesheet">
+	@import	url("css/bootstrap.min.css");
+	@import url("css/dc.css");
+	@import url("css/gantt.css");
+</style>
+
+</head>
+<body>
+<span style="font-weight: bold; font-size:24px; float:left;">List: LibTech</span> <br>
+<!-- <div class="dc-data-count dc-chart"> 
+	<span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
+</div> -->
+
+<div id="allcharts">
+	<br><br>
+	<div id="timeline-day-chart">
+	    <span id="charttitle">Messages By Day</span>
+	    <a class="reset" href="javascript:timelineBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+<!-- 	<div id="participant-gender-row-chart">
+	    <span>Participants By Gender</span>
+	    <a class="reset" href="javascript:participantGenderRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	</div> -->
+
+	<br>
+
+	<div id="gender-row-chart" style="height:200px;">
+	    <span id="charttitle">Messages By Gender</span>
+	    <a class="reset" href="javascript:genderRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+	<br>
+
+	<div id="msgtype-row-chart">
+	    <span id="charttitle">Messages By Type</span>
+	    <a class="reset" href="javascript:msgRowChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+	<br><br>
+
+	<div id="all-participant-chart">
+	    <span id="charttitle">All Participants By Messages</span>
+	    <a class="reset" href="javascript:allParticipantsBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div>
+
+	<br>
+<!-- 	<div id="top-50-participant-chart">
+	    <span id="charttitle">Top 50 Participants By Messages</span>
+	    <a class="reset" href="javascript:top50ParticipantsBarChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+	    <span class="reset" style="display: none;">Current filter: <span class="filter"></span></span>
+	    <br>
+	</div> -->
+
+</div>
+
+<div id="gantt"> </div>
+
+<script type="text/javascript" >
+var genderRowChart = dc.rowChart("#gender-row-chart");
+var msgRowChart = dc.rowChart("#msgtype-row-chart");
+var timelineBarChart = dc.barChart("#timeline-day-chart");
+var allParticipantsBarChart = dc.rowChart("#all-participant-chart");
+var top50ParticipantsBarChart = dc.rowChart("top-50-partiicpant-chart");
+
+var participantGenderRowChart = dc.rowChart("#participant-gender-row-chart");
+var topParticipantsBubbleChart = dc.bubbleChart("#top-participant-bubble-chart");
+
+function renderMyCharts(mdata, pdata) {
+
+	var messagesData = mdata.rows.map(function (row) {
+		//console.log(row.value);
+		if (typeof row.value.msgID !== 'string') throw new Error("unexpected type");
+		return {
+			'startDate': new Date(row.value.date),
+			'endDate': new Date(new Date(row.value.date).getTime() + row.value.minutes*60*1000),
+			'threadName': row.value.threadID,
+			'gender': row.value.gender,
+			'status': row.value.gender,
+			'list': row.value.list,
+			'msgType': row.value.msgType,
+			'participant':row.value.participantID
+		};
+
+	 });
+	//messageData crossfilter
+	var mdx = crossfilter(messagesData);
+	// define group all for counting
+	var all = mdx.groupAll();
+
+	//total counts
+	//dc.dataCount(".dc-data-count")
+	//	.dimension(mdx)
+	//	.group(all);
+
+	//participant Data
+	var participantsData = pdata.rows.map(function (row) {
+		//console.log(row.value);
+		if (typeof row.value.name !== 'string') throw new Error("unexpected type");
+		return {
+			'controlMetric':row.value.control,
+			'totalPosts':row.value.totalPosts,
+			'joinedList': new Date(row.value.entryTime),
+			'averageRepliesMetric':row.value.averageReplies,
+			'lastPost': new Date(row.value.lastPost),
+			'responseMetric':row.value.response,
+			'starterMetric':row.value.starter,
+			'name':row.value.name,
+			'gender':row.value.gender,
+			'engagementMetric':row.value.engagement,
+			'list':row.value.list,
+			'minutesSpent':row.value.timeSpent
+		};
+
+	 });
+	//crossfiler for participants
+	var pdx = crossfilter(participantsData);
+	// define group all for counting
+	var pall = pdx.groupAll();
+
+
+	// //messages by gender
+	// var messagesByParticipant = mdx.dimension(function(d) { return d.participant;});
+	// var messagesByParticipantGroup = messagesByParticipant.group().reduce(
+	//     //add function
+	//     function(p,v) {
+	//     	// since grouped by participant, always return gender here 
+	//         return v.gender; 
+	//     }, 
+	//     //remove function
+	//     function(p,v) { 
+	//     	return undefined; 
+	//     },
+	//     //initial value 
+	//     function() { 
+	//     	return undefined;  
+	//     }).all();
+
+	// // make the returned data structure have relevant names
+	// messagesByParticipantGroup = messagesByParticipantGroup.map(function(_) { return {'participant': _.key, 'gender': _.value }; });
+	// console.log(messagesByParticipantGroup);
+
+
+	
+	//gender dimension
+	var mVolumeByGender = mdx.dimension(function (d) { return d.gender;});
+	var mVolumeByGenderGroup = mVolumeByGender.group().reduceCount();
+
+    
+	genderRowChart.width(300) // (optional) define chart width, :default = 200
+	    .height(180) // (optional) define chart height, :default = 200
+	    .group(mVolumeByGenderGroup) // set group
+	    .dimension(mVolumeByGender) // set dimension
+	    .turnOnControls()
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
+	    .gap(7)
+	    .labelOffsetX(5)
+	    .labelOffsetY(10)
+	    .renderLabel(true)
+	    .renderTitle(true)
+	    .xAxis().ticks(7);
+
+	// define a dimension on gender
+	var volumeByMsgType = mdx.dimension(function (d) { return d.msgType; });
+	var volumeByMsgTypeGroup = volumeByMsgType.group().reduceCount();
+
+	msgRowChart.width(180) // (optional) define chart width, :default = 200
+	    .height(180) // (optional) define chart height, :default = 200
+	    .group(volumeByMsgTypeGroup) // set group
+	    .dimension(volumeByMsgType) // set dimension
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .turnOnControls()
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
+	    .gap(7)
+	    .labelOffsetX(5)
+	    .labelOffsetY(10)
+	    .renderLabel(true)
+	    .renderTitle(true)
+	    .xAxis().ticks(4);
+
+
+	//TIMELINE
+	//day
+	var volumeOverDay = mdx.dimension(function (d) { return d3.time.day(d.startDate); }); //TODO
+	var volumeOverDayGroup = volumeOverDay.group().reduceCount();
+	//month
+	var volumeOverMonth = mdx.dimension(function (d) { return d3.time.month(d.startDate); }); //TODO
+	var volumeOverMonthGroup = volumeOverMonth.group().reduceCount();
+	//hour
+	var volumeOverHour = mdx.dimension(function (d) { return d3.time.hour(d.startDate); }); //TODO
+	var volumeOverHourGroup = volumeOverHour.group().reduceCount();
+
+	timelineBarChart.width(1000) // (optional) define chart width, :default = 200
+	    .height(150) // (optional) define chart height, :default = 200
+	    .transitionDuration(500) // (optional) define chart transition duration, :default = 500
+	    .margins({top: 10, right: 50, bottom: 30, left: 100})
+	    .turnOnControls()
+	    .dimension(volumeOverDay) // set dimension
+	    .group(volumeOverDayGroup) // set group
+	    //.dimension(volumeOverHour) // set dimension
+	    //.group(volumeOverHourGroup) // set group
+	    //.dimension(volumeOverMonth) // set dimension
+	    //.group(volumeOverMonthGroup) // set group
+	    .elasticX(true)
+	    .xAxisPadding(100)
+	    .x(d3.time.scale().domain([new Date(2010, 0, 1), new Date(2013, 6, 30)]))
+	    .centerBar(true)
+	    .gap(1);
+
+
+
+	//person dimension
+	var mVolumeByParticipant = mdx.dimension(function (d) { return d.participant;});
+	var mVolumeByParticipantGroup = mVolumeByParticipant.group().reduceCount();
+	//console.log(mVolumeByParticipantGroup);
+
+	allParticipantsBarChart.width(500) // (optional) define chart width, :default = 200
+	    .height(15000) // (optional) define chart height, :default = 200
+	    .group(mVolumeByParticipantGroup) // set group
+	    .dimension(mVolumeByParticipant) // set dimension
+	    .turnOnControls()
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
+	    .gap(7)
+	    .labelOffsetX(5)
+	    .labelOffsetY(10)
+	    .renderLabel(false)
+	    .renderTitle(true)
+	    .xAxis().ticks(7);
+
+
+
+	//top participants
+	var participantByPosts = pdx.dimension(function (d) { return d.totalPosts; });
+	var participantByPostsGroup = participantByPosts.group().reduceCount();
+	
+	//top 50 chart
+	var top50participants = participantByPosts.top(50);
+	var top50participantsGroup = participantByPosts.top(50);
+	console.log(top50participants);
+
+
+	top50ParticipantsBarChart.width(300) // (optional) define chart width, :default = 200
+	    .height(5000) // (optional) define chart height, :default = 200
+	    .group(top50participants) // set group
+	    .dimension(top50participants) // set dimension
+	    .turnOnControls()
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
+	    .gap(7)
+	    .labelOffsetX(5)
+	    .labelOffsetY(10)
+	    .renderLabel(true)
+	    .renderTitle(true)
+	    .xAxis().ticks(7);
+
+	//participants by Gender
+	var participantsByGender = pdx.dimension(function (d) {return d.gender;});
+	var participantsByGenderGroup = participantsByGender.group().reduceCount();
+
+	participantGenderRowChart.width(150) // (optional) define chart width, :default = 200
+	    .height(180) // (optional) define chart height, :default = 200
+	    .group(participantsByGenderGroup) // set group
+	    .dimension(participantsByGender) // set dimension
+	    .turnOnControls()
+	    .margins({top: 20, left: 10, right: 10, bottom: 20})
+	    .colors(['#352e5a', '#f68028', '#a3b746'])
+	    .gap(7)
+	    .labelOffsetX(5)
+	    .labelOffsetY(10)
+	    .renderLabel(true)
+	    .renderTitle(true)
+	    .xAxis().ticks(4);
+	 participantGenderRowChart.on("filtered", function (chart, filter) { genderRowChart.filter(filter); });
+
+
+	topParticipantsBubbleChart.width(990)
+        .height(300)
+        .margins({top: 10, right: 50, bottom: 30, left: 60})
+        .dimension(participantsByGender)
+        .group(participantsByGenderGroup)
+        .colorDomain(d3.scale.ordinal().domain(["female", "male", "unknown"]))
+        .colors(['#352e5a', '#f68028', '#a3b746'])
+        .colorAccessor(function (d) { return d.gender; })
+        .keyAccessor(function (p) { return p.value; })
+        .valueAccessor(function (p) { return p.value; })
+        .radiusValueAccessor(function (p) { return p.value * 0.5; })
+        .x(d3.scale.linear().domain([0, 100]))
+        .y(d3.scale.ordinal().domain(["female", "male", "unknown"]).range([0, 500, 1000]))
+        //.y(d3.scale.linear().domain([0,1000]))
+        .r(d3.scale.linear().domain([0, 1000]))
+        .yAxisPadding(10)
+        .elasticX(true)
+        .elasticY(true)
+        .xAxisPadding(10)
+        .maxBubbleRelativeSize(0.1)
+        .renderHorizontalGridLines(true)
+        .renderVerticalGridLines(true)
+        .renderLabel(false)
+        .renderTitle(true);
+		//.yAxis().tickFormat()
+		//.yAxis().tickValues(["female", "male", "unknown"]);
+
+        topParticipantsBubbleChart.xAxis().tickFormat(function (s) {
+           return s + " messages";
+        });
+
+        //CODE FOR THE COORDINATE CHART
+        // monthly index avg fluctuation in percentage
+     	/*
+        var moveMonths = ndx.dimension(function (d) {
+            return d.month;
+        });
+        var monthlyMoveGroup = moveMonths.group().reduceSum(function (d) {
+            return Math.abs(+d.close - +d.open);
+        });
+        var volumeByMonthGroup = moveMonths.group().reduceSum(function (d) {
+            return d.volume / 500000;
+        });
+        var indexAvgByMonthGroup = moveMonths.group().reduce(
+                function (p, v) {
+                    ++p.days;
+                    p.total += (+v.open + +v.close) / 2;
+                    p.avg = Math.round(p.total / p.days);
+                    return p;
+                },
+                function (p, v) {
+                    --p.days;
+                    p.total -= (+v.open + +v.close) / 2;
+                    p.avg = p.days == 0 ? 0 : Math.round(p.total / p.days);
+                    return p;
+                },
+                function () {
+                    return {days: 0, total: 0, avg: 0};
+                }
+        );
+*/
+	
+	//GANTT CHART
+	//THREAD grouping for gantt - TODO
+	var threadNames = mdx.dimension(function (d) {
+		return d.threadName;
+	});
+	
+	var threadNameList = threadNames.group().all();
+	var threadStatuses = mdx.dimension(function (d) {
+		return d.status;
+	});
+	var threadStatusList = threadStatuses.group().all();
+
+
+
+	messagesData.sort(function(a, b) {
+	    return a.endDate - b.endDate;
+	});
+	var maxDate = messagesData[messagesData.length - 1].endDate;
+	messagesData.sort(function(a, b) {
+	    return a.startDate - b.startDate;
+	});
+	var minDate = messagesData[0].startDate;
+
+	var format = "%H:%M";
+
+	//var gantt = d3.gantt().taskTypes(threadNameList).taskStatus(taskStatus).tickFormat(format);
+	//gantt(tasks);
+
+	function filterby(value) {
+		
+		if(value != 'ALL'){
+			var list = tasks.filter( function (task) { return task.status == value; } );
+			console.log(list);
+			var div = document.getElementById('gantt');
+			div.innerHTML = null;
+			gantt(list);
+		}
+		else{
+			var list = tasks;
+			console.log(list);
+			var div = document.getElementById('gantt');
+			div.innerHTML = null;
+			gantt(list);
+		}
+	}
+
+
+	dc.renderAll();
+};
+
+d3.json("data/messages-libtech.json", function(mdata) { 
+    console.log("load messages json");
+
+    //participant data
+    d3.json("data/participants-libtech.json", function(pdata) {
+        console.log("load participant json");
+        renderMyCharts(mdata, pdata);
+    });
+});
+
+</script>
+</body>
+</html>
