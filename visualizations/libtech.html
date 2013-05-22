@@ -18,7 +18,7 @@
 
 </head>
 <body>
-<span style="font-weight: bold; font-size:24px; float:left;">List: PostGIS-Dev</span> <br>
+<span style="font-weight: bold; font-size:24px; float:left;">List: Talk-US</span> <br>
 <!-- <div class="dc-data-count dc-chart"> 
 	<span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a>
 </div> -->
@@ -408,11 +408,11 @@ function renderMyCharts(mdata, pdata) {
 	dc.renderAll();
 };
 
-d3.json("data/messages-postgisdev.json", function(mdata) { 
+d3.json("data/messages-libtech.json", function(mdata) { 
     console.log("load messages json");
 
     //participant data
-    d3.json("data/participants-postgisdev.json", function(pdata) {
+    d3.json("data/participants-libtech.json", function(pdata) {
         console.log("load participant json");
         renderMyCharts(mdata, pdata);
     });

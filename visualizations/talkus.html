@@ -412,7 +412,7 @@ d3.json("data/messages-talkus.json", function(mdata) {
     console.log("load messages json");
 
     //participant data
-    d3.json("data/participants.json", function(pdata) {
+    d3.json("data/participants-talkus.json", function(pdata) {
         console.log("load participant json");
         renderMyCharts(mdata, pdata);
     });
