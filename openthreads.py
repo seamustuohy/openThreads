@@ -6,22 +6,31 @@ import sys
 
 def logMe(logItem):
     """This function prints out logging when the program is called form the command line."""
-    if __name__ == '__main__':
-        print(logItem)
+    #if __name__ == '__main__':
+    print(logItem)
 
 logMe("Welcome to Open Threads... Please run openthreads.openThread(FILE_NAME) to open a text file of a list serv")
 
 class openThread:
-    def __init__(self, fileLoc):
+    def __init__(self, fileLoc, threadName=None, parse=None):
         """Creating a new openThread requires that you pass it the location of the thread that you wish to parse."""
         if fileLoc:
+            if threadName != None:
+                self.threadName = threadName
+            else:
+                self.threadName = "listServ"
             logMe("Parsing list-serv... This may take a moment")
             self.raw = self.getArchive(fileLoc)
             self.messages = self.getMessages(self.raw)
             logMe("List Serv Parsed. Identifying Unique users...")
             self.First = self.firstPost(self.messages)
-            self.threads = self.threader(self.messages)
             logMe("Users Identified! Thank you for waiting.")
+            self.threads = self.threader(self.messages)
+            if parse == 'false':
+                logMe("Starting To Parse List Serv")
+                self.profiles = self.runProf()
+                self.msgProf = self.runMsgs()
+                self.threadProf = self.runThreads()
         else:
             logMe("Please specify a list serv you would like to parse.")
 
@@ -86,7 +95,6 @@ class openThread:
             msgDict['From'] = self.checkReg(whoCheck)
             msgDict['Name'] = re.findall(name, self.checkReg(whoCheck))[0]
 
-
         dateCheck = re.findall(date, email, flags=re.DOTALL)
         if dateCheck:
             msgDict['Date'] = self.checkReg(dateCheck)
@@ -144,9 +152,20 @@ class openThread:
         TestingMethod = checkCompDate"""
         second, minute, hour, day, month, year = 0,0,0,0,0,0
         dWrd = '[A-Z][a-z]{2}'
+        #print(dateCheck)
         compDateDict = ''+dWrd+',\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})\:(\d{2})'
+        compDateDictNoDay = '\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})\:(\d{2})'
+        compDateDictNoSec = '\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})'
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         compactTup = re.findall(compDateDict, self.checkReg(dateCheck))
+        if compactTup == []:
+            compactTup = re.findall(compDateDictNoDay, self.checkReg(dateCheck))
+            if compactTup == []:
+                compactTup = re.findall(compDateDictNoSec, self.checkReg(dateCheck))
+                print(compactTup)
+                compactTup[0] = compactTup[0] + ('00',)
+                print(compactTup)
+                
         for i in [i for i,x in enumerate(months) if x == compactTup[0][1]]:
             month = i + 1
         if len(str(month)) == 1:
@@ -175,7 +194,7 @@ class openThread:
         if database:
             db = couch[database]
         else:
-            db = couch["listServ"]
+            db = couch["listserv"]
         
         #This will check if you pass it a specifc data set and send either that, or the full messages dict to the database
         if data:
@@ -538,6 +557,75 @@ class openThread:
         return(bios)
 
 
+    def runProf(self):
+        users  = self.users()
+        totalUsers = len(users)
+        logMe("Please wait... " + str(totalUsers) + " user profiles to run")
+        profiles = {}
+        numComplete = 0
+        #Start Percentage Print Values
+        y = 0
+        tenth = len(users) / 10
+        check = tenth
+        percent = 10
+        #End Percentage Print values
+        for i in users:
+            profiles[i] = self.participantStrucCreator(i)
+            #Start Print Percentage
+            y += 1
+            if y >= check:
+                logMe(str(percent) + "% completed")
+                percent += 10
+                check += tenth
+                #end Print Percentage
+        return(profiles)
+
+    def runMsgs(self):
+        Msgs  = self.messages
+        totalMsgs = len(Msgs)
+        logMe("Please wait... " + str(totalMsgs) + " message profiles to run")
+        profiles = {}
+        numComplete = 0
+        #Start Percentage Print Values
+        y = 0
+        tenth = len(Msgs) / 10
+        check = tenth
+        percent = 10
+        #End Percentage Print values
+        for i in Msgs:
+            profiles[i['ID']] = self.messageStrucCreator(i['ID'])
+            #Start Print Percentage
+            y += 1
+            if y >= check:
+                logMe(str(percent) + "% completed")
+                percent += 10
+                check += tenth
+                #end Print Percentage
+        return(profiles)
+
+    def runThreads(self):
+        threads  = self.threads
+        totalThreads = len(threads)
+        logMe("Please wait... " + str(totalThreads) + " thread profiles to run")
+        profiles = {}
+        numComplete = 0
+        #Start Percentage Print Values
+        y = 0
+        tenth = len(threads) / 10
+        check = tenth
+        percent = 10
+        #End Percentage Print values
+        for i in threads:
+            profiles[i] = self.threadStrucCreator(i)
+            #Start Print Percentage
+            y += 1
+            if y >= check:
+                logMe(str(percent) + "% completed")
+                percent += 10
+                check += tenth
+                #end Print Percentage
+        return(profiles)
+
     def threadStrucCreator(self, msgID):
         """This function created a data structure from a parsed list-serv that is focused on analizing individual message threads """
     #Check if msg is the start of a thread, or if it is in a thread.
@@ -566,7 +654,7 @@ class openThread:
                 participants.append(t['Name'])
                 bodies.append(t['ScrapedBody'])
                 cTimes.append(t['compactDate'])
-                times.append(t['Date'])   
+                times.append(t['Date'])
     #Then get the thread particpants
         for i in msgs:
             for k in self.messages:
@@ -574,7 +662,7 @@ class openThread:
                     participants.append(k['Name'])
                     bodies.append(k['ScrapedBody'])
                     cTimes.append(k['compactDate'])
-                    times.append(k['Date'])   
+                    times.append(k['Date'])
     #get number of participants genders
         for i in participants:
             gender.append(self.gender(i))
@@ -602,25 +690,28 @@ class openThread:
             "calendartime":timeDiff,
             "genderBalance": genderVariance,
             "messages":msgs,
+            'type':"thread",
+            'list':self.threadName,
             "participants":participants,
             }
         return(threads)
 
     def makeTimeDiff(self, timeDiff):
         printTime = str(timeDiff)
+        printTime = printTime[:-2]
         timeSize = len(printTime)
-        if timeSize == 2:
+        if timeSize <= 2:
             calTime = printTime + " seconds"
+        elif timeSize > 10:
+            calTime = printTime[-12:-10] + " years " + printTime[-10:-8] + " months " + printTime[-8:-6] + " days " + printTime[-6:-4] + " Hours " + printTime[-4:-2] + " minutes and " + printTime[-2:] + " seconds"
+        elif timeSize > 8:
+            calTime = printTime[-10:-8] + " months " + printTime[-8:-6] + " days " + printTime[-6:-4] + " Hours " + printTime[-4:-2] + " minutes and " + printTime[-2:] + " seconds"
+        elif timeSize > 6:
+            calTime = printTime[-8:-6] + " days " + printTime[-6:-4] + " Hours " + printTime[-4:-2] + " minutes and " + printTime[-2:] + " seconds"
+        elif timeSize > 4:
+            calTime = printTime[-6:-4] + " Hours " + printTime[-4:-2] + " minutes and " + printTime[-2:] + " seconds"
         elif timeSize > 2:
             calTime = printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
-        elif timeSize > 4:
-            calTime = printTime[:-4] + " Hours " + printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
-        elif timeSize > 6:
-            calTime = printTime[:-6] + " days " + printTime[:-4] + " Hours " + printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
-        elif timeSize > 8:
-            calTime = printTime[:-8] + " months " + printTime[:-6] + " days " + printTime[:-4] + " Hours " + printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
-        elif timeSize > 10:
-            calTime = printTime[:-10] + " years " + printTime[:-8] + " months " + printTime[:-6] + " days " + printTime[:-4] + " Hours " + printTime[:-2] + " minutes and " + printTime[-2:] + " seconds"
         return calTime
 
     def messageStrucCreator(self, msgID):
@@ -632,6 +723,8 @@ class openThread:
         #Get Thread ID
         if message['References'] and message['References'][0]:
             threadID = message['References'][0]
+        else:
+            threadID = msgID
         #Define Message Types (fwd:, re:, )
         if re.findall("^.*[fF]wd\:.*", message['Subject']) != []:
             msgType = "fwd"
@@ -647,10 +740,13 @@ class openThread:
         genderGuess = self.gender(message['Name'])
         messages = {
             "msgID":msgID,
+            "date":message['Date'],
             "threadID":threadID,
             "participantID":message['Name'],
             "msgType":msgType,
             "minutes":time,
+            'type':"message",
+            'list':self.threadName,
             "gender":genderGuess,
             }
         return(messages)
@@ -685,7 +781,10 @@ class openThread:
         #Get Gender
         genderGuess = self.gender(name)
         #control metric - # of replies / # threads started by participant
-        cntrlMtrc = float(replyNum)/float(numInitiated)
+        if numInitiated != 0:
+            cntrlMtrc = float(replyNum)/float(numInitiated)
+        else:
+            cntrlMtrc = 0
         #ENGAGEMENT  = "Average number of replies a user has per thread"
         usrThreads = {}
         if replyID != 0:
@@ -702,7 +801,10 @@ class openThread:
             for i in usrThreads.iteritems():
                 repNum += 1
                 totalRep += i[1]
-            userRepPerThread = float(totalRep)/float(repNum)
+            if repNum != 0:
+                userRepPerThread = float(totalRep)/float(repNum)
+            else:
+                userRepPerThread = 0
         #the average ammount of replies this individual gets per thread they start
         threadReplies = []
         for i in userInitiated:
@@ -718,12 +820,17 @@ class openThread:
         for i in threadReplies:
             repNum += 1
             totalRep += i
-        repPerThread = float(totalRep)/float(repNum)
+        if repNum != 0:
+            repPerThread = float(totalRep)/float(repNum)
+        else:
+            repPerThread = 0
         
 #We need to decide on how to measure this. conversationGenerator = "conversation generator metric - threads started / average number of replies to thread (or total? not sure)"
         
         participants = {
             'name':name,
+            'type':"participant",
+            'list':self.threadName,
             'totalPosts':totalMsgs,
             'response':responseMtrc,
             'starter':starterMtrc,
