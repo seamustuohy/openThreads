@@ -26,7 +26,7 @@ class openThread:
             self.First = self.firstPost(self.messages)
             logMe("Users Identified! Thank you for waiting.")
             self.threads = self.threader(self.messages)
-            if parse == 'false':
+            if parse != 'false':
                 logMe("Starting To Parse List Serv")
                 self.profiles = self.runProf()
                 self.msgProf = self.runMsgs()
