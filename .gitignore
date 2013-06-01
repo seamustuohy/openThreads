@@ -5,4 +5,4 @@ parsables/
 \.\#*
 *.pyc
 .DS_Store
-visualizations/data/
+visualizations/data
