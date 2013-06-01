@@ -110,9 +110,9 @@ function renderMyCharts(mdata, pdata) {
 	var all = mdx.groupAll();
 
 	//total counts
-	//dc.dataCount(".dc-data-count")
-	//	.dimension(mdx)
-	//	.group(all);
+	dc.dataCount(".dc-data-count")
+		.dimension(mdx)
+		.group(all);
 
 	//participant Data
 	var participantsData = pdata.rows.map(function (row) {
