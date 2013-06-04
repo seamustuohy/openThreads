@@ -6,3 +6,4 @@ parsables/
 *.pyc
 .DS_Store
 visualizations/data
+docs/

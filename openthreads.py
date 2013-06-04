@@ -162,9 +162,11 @@ class openThread:
             compactTup = re.findall(compDateDictNoDay, self.checkReg(dateCheck))
             if compactTup == []:
                 compactTup = re.findall(compDateDictNoSec, self.checkReg(dateCheck))
-                print(compactTup)
-                compactTup[0] = compactTup[0] + ('00',)
-                print(compactTup)
+                if compactTup != []:
+                    compactTup[0] = compactTup[0] + ('00',)
+                else:
+                    print('Unsupported Date Format: Please send the output of this command and the printed date to openThreads to add support')
+                    print(dateCheck)
                 
         for i in [i for i,x in enumerate(months) if x == compactTup[0][1]]:
             month = i + 1
