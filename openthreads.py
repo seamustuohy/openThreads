@@ -166,7 +166,7 @@ class openThread:
                     compactTup[0] = compactTup[0] + ('00',)
                 else:
                     compactTup = re.findall(compDateDictShortNum, self.checkReg(dateCheck))
-                    if conpactTup == []:
+                    if compactTup == []:
                         print('Unsupported Date Format: Please send the output of this command and the printed date to openThreads to add support')
                         print(dateCheck)
                 
