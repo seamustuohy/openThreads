@@ -152,10 +152,10 @@ class openThread:
         TestingMethod = checkCompDate"""
         second, minute, hour, day, month, year = 0,0,0,0,0,0
         dWrd = '[A-Z][a-z]{2}'
-        #print(dateCheck)
         compDateDict = ''+dWrd+',\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})\:(\d{2})'
         compDateDictNoDay = '\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})\:(\d{2})'
         compDateDictNoSec = '\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d{2})\:(\d{2})'
+        compDateDictShortNum = ''+dWrd+',\s*?(\d*?)\s('+dWrd+')\s(\d{4})\s(\d*?)\:(\d*?)\:(\d{2})'
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         compactTup = re.findall(compDateDict, self.checkReg(dateCheck))
         if compactTup == []:
@@ -165,8 +165,10 @@ class openThread:
                 if compactTup != []:
                     compactTup[0] = compactTup[0] + ('00',)
                 else:
-                    print('Unsupported Date Format: Please send the output of this command and the printed date to openThreads to add support')
-                    print(dateCheck)
+                    compactTup = re.findall(compDateDictShortNum, self.checkReg(dateCheck))
+                    if conpactTup == []:
+                        print('Unsupported Date Format: Please send the output of this command and the printed date to openThreads to add support')
+                        print(dateCheck)
                 
         for i in [i for i,x in enumerate(months) if x == compactTup[0][1]]:
             month = i + 1
