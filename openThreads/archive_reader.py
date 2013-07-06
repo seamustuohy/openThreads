@@ -59,7 +59,6 @@ def message_parser(raw_message):
                 del message_dict[i]
     return message_dict
 
-
 def parse_From(full_from_field):
     """Parser for the From field which takes the whole 'From' field and alters only the fields required to take a email formatted message and turn it into a parsable message."""
     message_dict = {}
