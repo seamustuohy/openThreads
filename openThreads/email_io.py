@@ -20,7 +20,6 @@ def main(listserv_file):
         listserv = listserv_types[curr_type](listserv_file)
     if listserv:
         return listserv
-    
 
 def get_json(fileName):
     f = open(fileName, 'r');
@@ -43,6 +42,10 @@ def get_site(site):
     #TODO All of this
     #1 See if messages on page
     #2 See if links to messages/.gz files
+    #3 download site into a folder
+    #4 if .gz then unzip files
+    #5 concatinate files into full archive
+    #6 use get_plain_text to grab the text and return it
     return site
 
 
@@ -80,6 +83,7 @@ def check_type(unknown):
 def check_plain_text(somefile):
     f = open(somefile, 'r');
     tmpMsg = f.read()
+    #Here I just check for some simple header information. If the file is in a non csv or json format but does contain a listserv this will import it as if it is a plain-text dump... be warned!
     who = '\S*\sat\s\S*'
     headerFront = '\nFrom\s' + who + '\s*'
     if re.search(headerFront, tmpMsg):
