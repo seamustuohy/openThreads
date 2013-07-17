@@ -4,8 +4,10 @@ import re
 import os
 import httplib
 import csv
+import urllib2
 
 from . import logger
+from . import util
 
 def main(listserv_file):
     listserv = False
@@ -20,7 +22,6 @@ def main(listserv_file):
         listserv = listserv_types[curr_type](listserv_file)
     if listserv:
         return listserv
-    
 
 def get_json(fileName):
     f = open(fileName, 'r');
@@ -36,14 +37,45 @@ def get_csv(somefile):
         reader = csv.reader(f)
         for row in reader:
             dev.append(row)
-    return dev
+    #return dev
 
 def get_site(site):
     """Connects to site and grabs list-serv files and passes them back"""
+    print(site)
     #TODO All of this
-    #1 See if messages on page
-    #2 See if links to messages/.gz files
+    html = urllib2.urlopen(site).read()
+    files = re.findall("\<td\>\<A href=\"(.*?\.(txt)?(\.gz)?)", html)
+    directory = save_list_file(site, files)
+    raw = get_all_raw(directory)
+    
     return site
+
+def get_all_raw(path):
+    ls = os.listdir(path)
+    text = []
+    for i in ls:
+        pt = util.read_gzip(path+i)
+        text.append(pt)
+    full_text = '\n'.join(text)
+    return full_text
+
+def save_list_file(site, files):
+    directories = re.findall("^https?\://(.*)", site)
+    directory = str("listserv/"+directories[0])
+    util.create_if_necessary(directory)
+    for i in files:
+        if i[-1] == '':
+            filetype = i[-2]
+        else:
+            filetype = i[-1]
+        print(i[0])
+        f = open(directory+i[0], "w")
+        dl = str(site)+str(i[0])
+        page = urllib2.urlopen(dl).read()
+        print(page)
+        f.write(page)
+        f.close()
+    return directory
 
 
 def check_type(unknown):
@@ -67,10 +99,10 @@ def check_type(unknown):
         #TODO Check for http://x.x.x and http://x.x and any variation
         if re.search("^.*\..*\..*", unknown):
         #Clear all http/https that a user might add
-            if re.findall("^https?\://(.*)", unknown):
+            if re.findall("^https?\:\/\/(.*)", unknown):
                 unknown = re.findall("^https?\:\/\/(.*)", unknown)[0]
                 print(unknown)
-            if check_url_exist(unknown): 
+            if check_url_exist(unknown):
                 logger.debug("listserv object is website")
                 return "site"
         else:
@@ -88,14 +120,19 @@ def check_plain_text(somefile):
         return False
         
 def check_url_exist(site):
-    conn = httplib.HTTPConnection(site)
-    #TODO DO we need to Check for malformed response like from my website?.. also fix your website seamus. Seriously!
-    conn.request('HEAD', site)
+    components = re.findall("(.*?)(\/.*)", site)[0]
+    print(components)
+    conn = httplib.HTTPConnection(components[0])
+#TODO DO we need to Check for malformed response and 302 like from my website?
+    conn.request('HEAD', components[1])
     response = conn.getresponse()
+    print(response.status)
     conn.close()
-    return response.status == 200
+    #TODO find out why so many of these pages return a 302 response?
+    return response.status == 200 or response.status == 302
 
 def check_csv(somefile):
+    #TODO try to actually import a csv of a mailing list
     csv_fileh = open(somefile, 'rb')
     try:
         dialect = csv.Sniffer().sniff(csv_fileh.read(1024))
@@ -107,7 +144,7 @@ def check_csv(somefile):
         return False
 
 def check_json(somefile):
-    #TODO actually implement this.
+    #TODO actually try this with json saved email list.
     try:
         json.loads(somefile)
     except ValueError:
@@ -130,4 +167,3 @@ def is_file(unknown):
     else:
         logger.warn("is_file():You do not have permission to access that file")
         return False
-

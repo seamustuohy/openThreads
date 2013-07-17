@@ -16,7 +16,6 @@ def main(listserv_identifier):
     #6 update visualization data bank
     #7 
     # import the list
-   
     
     
     
