@@ -41,34 +41,48 @@ def get_csv(somefile):
 
 def get_site(site):
     """Connects to site and grabs list-serv files and passes them back"""
-    print(site)
-    #TODO All of this
+    logger.info("Reading site "+site)
     html = urllib2.urlopen(site).read()
     files = re.findall("\<td\>\<A href=\"(.*?\.(txt)?(\.gz)?)", html)
-    directory = save_list_file(site, files)
-    raw = get_all_raw(directory)
-    
-    return site
+    if files:
+        directory = save_list_file(site, files)
+        raw = get_all_raw(directory)
+    if raw:
+        return raw
+    else:
+        return False
 
 def get_all_raw(path):
     ls = os.listdir(path)
     text = []
     for i in ls:
-        pt = util.read_gzip(path+i)
+        logger.info("Reading"+i)
+        filetype = re.findall(".*(txt$)|(gz$)", i)[0]
+        print(filetype)
+        if filetype[-1] == 'gz':
+            logger.info("file is a gzip file")
+            pt = util.read_gzip(path+i)
+        elif filetype[0] == 'txt':
+            logger.info("file is a plainText file")
+            if check_plain_text(path+i):
+                raw = open(path+i)
+                pt = raw.read()
+        else:
+            logger.error("File is corrupted or in an unfamiliar format.")
         text.append(pt)
     full_text = '\n'.join(text)
-    return full_text
+    f = open(path+"archiveFile", "w")
+    f.write(full_text)
+    f.close()
+    parsed = archive_reader.parse_archive(path+"archiveFile")
+    return parsed
 
 def save_list_file(site, files):
     directories = re.findall("^https?\://(.*)", site)
     directory = str("listserv/"+directories[0])
     util.create_if_necessary(directory)
     for i in files:
-        if i[-1] == '':
-            filetype = i[-2]
-        else:
-            filetype = i[-1]
-        print(i[0])
+        logger.info("proicessing"+i[0])
         f = open(directory+i[0], "w")
         dl = str(site)+str(i[0])
         page = urllib2.urlopen(dl).read()
@@ -76,7 +90,6 @@ def save_list_file(site, files):
         f.write(page)
         f.close()
     return directory
-
 
 def check_type(unknown):
     """Checks if the string passed to the function matches a folder, then a local file, and finally, a website address."""
@@ -124,7 +137,6 @@ def check_url_exist(site):
     components = re.findall("(.*?)(\/.*)", site)[0]
     print(components)
     conn = httplib.HTTPConnection(components[0])
-#TODO DO we need to Check for malformed response and 302 like from my website?
     conn.request('HEAD', components[1])
     response = conn.getresponse()
     print(response.status)

@@ -28,6 +28,9 @@ def create_if_necessary(directory):
 
 
 def read_gzip(filename):
+    """opens a gzip file and returns the plain text.
+
+    """
     input_file = gzip.open(filename, 'rb')
     try:
            plain_text  = input_file.read()
