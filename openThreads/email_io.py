@@ -97,7 +97,7 @@ def check_type(unknown):
         'json':check_json,
         'CSV':check_csv,
         }
-    if is_file(unknown):
+    if util.is_file(unknown):
         for i in file_types:
             if file_types[i](unknown):
                 return i
@@ -166,17 +166,3 @@ def check_json(somefile):
     logger.debug("file is JSON")
     return True
 
-def is_file(unknown):
-    """Determines if a file is accessable, and contains actual data. It does NOT check to see if the file contains any data. """
-#stolen from https://github.com/isislovecruft/python-gnupg/blob/master/gnupg/_util.py
-    try:
-        assert os.lstat(unknown).st_size > 0, "not a file: %s" % unknown
-    except (AssertionError, TypeError, IOError, OSError) as err:
-#end stolen <3
-        logger.debug("is_file():"+err.strerror)
-        return False
-    if os.access(unknown, os.R_OK):
-        return True
-    else:
-        logger.warn("is_file():You do not have permission to access that file")
-        return False

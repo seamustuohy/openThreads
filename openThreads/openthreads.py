@@ -57,7 +57,7 @@ class openThread:
         return messages
     
     def split(self, raw):
-        """
+        """This function takes the location of the list-serv text file and opens it up for parsing. Much later I may add the ability to just choose the html address of a list-serv archive. That will be straight up neato!
         """
         if raw == '':
             logMe("Please get a list serv archive and import it file first.")

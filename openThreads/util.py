@@ -38,3 +38,22 @@ def read_gzip(filename):
             input_file.close()
     return plain_text
     
+def is_file(unknown):
+    """Determines if a file is accessable, and contains actual data. It does NOT check to see if the file contains any data. """
+#stolen from https://github.com/isislovecruft/python-gnupg/blob/master/gnupg/_util.py
+    try:
+        assert os.lstat(unknown).st_size > 0, "not a file: %s" % unknown
+    except (AssertionError, TypeError, IOError, OSError) as err:
+#end stolen <3
+        logger.debug("is_file():"+err.strerror)
+        return False
+    if os.access(unknown, os.R_OK):
+        return True
+    else:
+        logger.warn("is_file():You do not have permission to access that file")
+        return False
+
+def open_listserv(filename):
+    #TODO Atually write this.
+    #TODO This will require that list_struc.py is finished and a data structure is chosen.
+    #TODO will be able to identify the file and use another function to open any csv or json formatted versions and save them as a compiled version.
