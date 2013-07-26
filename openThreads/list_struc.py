@@ -63,7 +63,7 @@ def get_msg_data(message, index):
             if quote_origin:
                 parsed_body['content'](chunk_index) = (quote_origin, plain)
             else:
-                logger.error("Quoted text NOT found in referenced messages")
+                logger.error("Quoted text NOT found in messages referenced messages")
                 parsed_body['content'](chunk_index) = ("UNKNOWN", plain)
         else:
             parsed_body['content'](chunk_index) = ('user', i)
