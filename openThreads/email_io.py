@@ -134,6 +134,7 @@ def check_plain_text(somefile):
         return False
         
 def check_url_exist(site):
+    logger.debug("checking url")
     components = re.findall("(.*?)(\/.*)", site)[0]
     print(components)
     conn = httplib.HTTPConnection(components[0])

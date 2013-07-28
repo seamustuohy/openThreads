@@ -1,12 +1,15 @@
-import email_io
+from . import email_io
 from archive_reader import message_parser
-import threader
-import profiles
 
-def main(listserv_identifier):
+from . import list_struc
+
+def main(listserv_file):
     """The controlling function that parses a list-serv"""
     #1 check to see what is being passed (message, listserv, html, etc)
-    listserv = email_io(listserv_file)
+    listserv = email_io.main(listserv_file)
+    index = list_struc.make_index(listserv)
+    return listserv, index
+    
     #1.5 load up any corresponding message database if a single message being added to the database
     #2 parse the messages into message object
     #3 if messages referenced by a parsed message are missing create a temporary blank message to show that the message is missing, this will also allow us to intuit personal messages sent that don't make it to the list-serv

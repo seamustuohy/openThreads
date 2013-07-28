@@ -17,7 +17,6 @@ Subject: [email-list] The Second Message
 Message-ID: <a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>
 
 
-
 I am a second messsage. I am From: testie McTesterson.
 
 LOVE Testie
@@ -26,8 +25,8 @@ From theotherguy at cs.uc.edu  Mon Jul 14 14:54:19 2008
 From: theotherguy at cs.uc.edu (Other Guy)
 Date: Mon, 14 Jul 2008 14:54:19 -0700
 Subject: [email-list] The Second Message
-In-Reply-To: <33041076.1216012273131.JavaMail.root@m08>
-References: <33041076.1216012273131.JavaMail.root@m08>
+In-Reply-To: <a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>
+References: <a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com> 
 Message-ID: <487BCB0B.8030005@cs.ucsc.edu>
 
 TOP POSTING IS FOR WINNERS!!!
@@ -45,8 +44,9 @@ From thethird at cs.pineapple.edu  Mon Jul 14 14:54:19 2008
 From: theotherguy at cs.pineapple.edu (Guytano Thirdio)
 Date: Mon, 15 Jul 2008 14:32:19 -0600
 Subject: Re: [email-list] The Second Message
-In-Reply-To: <a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>
+In-Reply-To: <487BCB0B.8030005@cs.ucsc.edu>
 References: <a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>
+	<487BCB0B.8030005@cs.ucsc.edu>
 Message-ID: <01a101c8f07e$9ab703d0$d0250b70$@bcs@pineapple.edu>
 
 >TOP POSTING IS FOR WINNERS!!!
@@ -67,7 +67,9 @@ From: testie at cs.testuni.edu (Testie McTesterson)
 Date: Mon, 15 Jul 2008 15:32:19 -0600
 Subject: Re:Re: [email-list] The Second Message
 In-Reply-To: <a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>
-References: <01a101c8f07e$9ab703d0$d0250b70$@bcs@pineapple.edu> <a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>
+References: <01a101c8f07e$9ab703d0$d0250b70$@bcs@pineapple.edu>
+	<a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>
+	<487BCB0B.8030005@cs.ucsc.edu>
 Message-ID: <fd43sdc8f07e$9af3f4fdsfw30$@bcs@pumpkin.edu>
 
 

@@ -1,6 +1,9 @@
 import re
 
-def PGP(self, body):
+from . import logger
+
+
+def PGP(body):
     "Get PGP content from a message body if it exists. Return false if it does not."
     beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
     endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
@@ -13,7 +16,7 @@ def PGP(self, body):
 
 def scrubbed(body):
     """When parsing from a plain_text listerv this function Returns true if an email is html formatted and false if an email was not"""
-    next_part = re.findall("-------------- next part --------------(.*)", i['Body'], flags=re.DOTALL)
+    next_part = re.findall("-------------- next part --------------(.*)", body, flags=re.DOTALL)
     if next_part != []:
         return True
     else:
@@ -21,7 +24,6 @@ def scrubbed(body):
 
 def message_components(body):
     lines = re.split("\n", body)
-    print(lines)
     message_set = []
     message_num = 0
     line_type = False
@@ -53,5 +55,7 @@ def message_components(body):
     return message_set
 
 def un_quote(quoted_reply):
-    unquoted_reply = re.sub("\n>*", "\n", quoted_reply)
+    unquoted_reply = re.sub('\n>*', '\n', quoted_reply)
+    unquoted_reply = re.sub('^>*', '', unquoted_reply)
     return unquoted_reply
+

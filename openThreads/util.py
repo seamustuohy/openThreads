@@ -54,6 +54,7 @@ def is_file(unknown):
         return False
 
 def open_listserv(filename):
+    pass
     #TODO Atually write this.
     #TODO This will require that list_struc.py is finished and a data structure is chosen.
     #TODO will be able to identify the file and use another function to open any csv or json formatted versions and save them as a compiled version.

@@ -19,7 +19,7 @@ def make_index(listserv):
     msg_dictionary = {}
     for i in listserv:
         if i['Message-ID'] in msg_dictionary.keys():
-            logger.error("Duplace message ID detected in list-serv")
+            logger.error("Duplace message ID detected in list-serv: "+i["Subject"])
         msg_dictionary[i['Message-ID']] = i
     return msg_dictionary
 
@@ -33,7 +33,7 @@ def add_to_index(message, index):
 def parse_body(message):
     parsed = {}
     body = message['Body']
-    #Get possible PGP Keys
+    #Get PGP Keys if possible
     pgp = regular_expressions.PGP(body)
     if pgp == []:
         parsed['pgp'] = pgp[0]
@@ -50,25 +50,38 @@ def get_msg_data(message, index):
         index = add_to_index(message, index)
     parsed_body = parse_body(message)
     #get comtent origins of replys in order "parsed_body['content']"
-    references = message['References']
+    if "References" in message.keys():
+        references = message['References']
+        parsed_body = get_quote_body(parsed_body, references, index)
+    else:
+        #put body in format created for reference text
+        parsed_body['content'][0] = ('user', len(parsed_body['content'][0]),  parsed_body['content'][0])
+    return parsed_body
+
+def get_quote_body(parsed_body, references, index):
+    logger.debug("get_quote_body started")
     for i in parsed_body['content']:
         chunk_index = parsed_body['content'].index(i)
         #if a quoted chunk
         if re.match(">", i):
-            find_quote_origin(i, references, index)
+            quote_origin = False
+            #print(i)
             plain = regular_expressions.un_quote(i)
+            #print(plain)
             for ref in references:
-                if plain in index[ref]['Body']:
-                    quote_origin = ref
+                if ref in index.keys():
+                    if plain in index[ref]['Body']:
+                        quote_origin = index[ref]['Name']
             if quote_origin:
-                parsed_body['content'](chunk_index) = (quote_origin, plain)
+                parsed_body['content'][chunk_index] = (quote_origin, len(i), plain)
             else:
-                logger.error("Quoted text NOT found in messages referenced messages")
-                parsed_body['content'](chunk_index) = ("UNKNOWN", plain)
+                logger.error("Quoted text not found")
+                parsed_body['content'][chunk_index] = ("unknown", len(i), plain)
         else:
-            parsed_body['content'](chunk_index) = ('user', i)
+            parsed_body['content'][chunk_index] = ('user', len(i),  i)
+    return parsed_body
+
     ###Get length of text in response to each quote (if top or bottom post then length applies to all text in quoted messages)
-    #### TODO check for sections that ALWAYS exist in the current parser. Like, list-serv automatic text and the like.
             
     ##check if user exists in thread before this message
     ##Check number of thread splits before & after this message
@@ -92,6 +105,7 @@ def get_msg_data(message, index):
     #
 
 def get_user_data():
+    pass
     #is the user on multiple list-servs
     #is the user interacting with the same people across list-servs
     #what are the strongest relationships a user has
@@ -152,9 +166,3 @@ quoted?,
 """    
 
 
-
-
-
-class listServ(name):
-    def __init__():
-        
