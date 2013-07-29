@@ -1,4 +1,5 @@
 import re
+import difflib
 
 from . import logger
 from . import util
@@ -30,7 +31,17 @@ def add_to_index(message, index):
     index[message['Message-ID']] = message
     return index
 
-def parse_body(message):
+def get_msg_data(message, index):
+    msg_data = {}
+    if message['Message-ID'] not in index.keys():
+        index = add_to_index(message, index)
+    msg_data['parsed_body'] = get_parsed_body(message, index)
+    return msg_data
+
+def split_body(message):
+    """ split the body of a message into its component parts
+    returns a dict with a section for PGP keys, if HTML exists, and content split by user.
+    """
     parsed = {}
     body = message['Body']
     #Get PGP Keys if possible
@@ -45,26 +56,31 @@ def parse_body(message):
     parsed['content'] = regular_expressions.message_components(body)
     return parsed
 
-def get_msg_data(message, index):
-    if message['Message-ID'] not in index.keys():
-        index = add_to_index(message, index)
-    parsed_body = parse_body(message)
+def get_parsed_body(message, index):
+    """Takes a message and an index of previously parsed messages and returns a dict with a section for PGP keys, if HTML exists, and content that includes the user name, original message,  length of section, section, and difference ratio between quoted text and referenced users email (1 = exact, 0 = completely different)"""
+    parsed_body = split_body(message)
     #get comtent origins of replys in order "parsed_body['content']"
     if "References" in message.keys():
         references = message['References']
-        parsed_body = get_quote_body(parsed_body, references, index)
+        #logger.debug(str(parsed_body))
+        parsed_body = get_quote_body(parsed_body, references, index, message['Message-ID'])
     else:
         #put body in format created for reference text
-        parsed_body['content'][0] = ('user', len(parsed_body['content'][0]),  parsed_body['content'][0])
+        #magic number 1.0 == 100% match between text and user text
+        parsed_body['content'][0] = ('user', message['Message-ID'], len(parsed_body['content'][0]),  parsed_body['content'][0], "1.0")
     return parsed_body
 
-def get_quote_body(parsed_body, references, index):
-    logger.debug("get_quote_body started")
+def get_quote_body(parsed_body, references, index, ID):
+    #logger.debug("get_quote_body started")
+    #logger.debug(str(parsed_body['content'][0]))
     for i in parsed_body['content']:
+        #logger.debug(str(parsed_body['content'][0]))
         chunk_index = parsed_body['content'].index(i)
+        #logger.debug(str(parsed_body['content'][0]))
         #if a quoted chunk
         if re.match(">", i):
             quote_origin = False
+            ref_msg = False
             #print(i)
             plain = regular_expressions.un_quote(i)
             #print(plain)
@@ -72,17 +88,35 @@ def get_quote_body(parsed_body, references, index):
                 if ref in index.keys():
                     if plain in index[ref]['Body']:
                         quote_origin = index[ref]['Name']
+                        ref_msg = index[ref]['Message-ID']
+                    #checking for similarity in case there was any editing of the text in the quote itself.
+                    #This was mostly added because some html email clients will edit out html links when they quote. This, by the way, sucks, and makes my life hard. So I don't like them. Not at all. I am using quick ratio because it is a nice in between from sloooooow ratio and sloopy real_quick_ratio
+                    else:
+                        ratio = difflib.SequenceMatcher(None, index[ref]['Body'], plain).quick_ratio()
+                        if ratio  >= .80:
+                            quote_origin = index[ref]['Name']
+                            ref_msg = index[ref]['Message-ID']
             if quote_origin:
-                parsed_body['content'][chunk_index] = (quote_origin, len(i), plain)
+                if ratio:
+                    parsed_body['content'][chunk_index] = (quote_origin, ref_msg, len(i), plain, ratio)
+                    ratio = False
+                    ref_msg = False
+                else:
+                    #magic number == 100% match between text and known reference
+                    parsed_body['content'][chunk_index] = (quote_origin, ref_msg, len(i), plain, "1.0")
+                    ref_msg = False
             else:
                 logger.error("Quoted text not found")
-                parsed_body['content'][chunk_index] = ("unknown", len(i), plain)
+                #magic number == 0% match between text and known references
+                parsed_body['content'][chunk_index] = ("unknown", "unknown", len(i), plain, "0.0")
         else:
-            parsed_body['content'][chunk_index] = ('user', len(i),  i)
+            print("YUP?")
+            #magic number == 100% match between text and user text
+            parsed_body['content'][chunk_index] = ('user', ID, len(i),  i, "1.0")
     return parsed_body
 
+    #TODO Each of the following need to use parsed_body in get_msg_data to create a secondary structure that includes parsed body.
     ###Get length of text in response to each quote (if top or bottom post then length applies to all text in quoted messages)
-            
     ##check if user exists in thread before this message
     ##Check number of thread splits before & after this message
     ##Check number of replies directly to this message
