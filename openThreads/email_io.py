@@ -1,5 +1,4 @@
 import archive_reader
-import json
 import re
 import os
 import httplib
@@ -13,8 +12,8 @@ def main(listserv_file):
     listserv = False
     listserv_types = {
         'plain_text': archive_reader.parse_archive,
-        'json':get_json,
-        'CSV':get_csv,
+        'json':util.get_json,
+        'CSV':util.get_csv,
         'site':get_site,
         }
     curr_type = check_type(listserv_file)
@@ -23,21 +22,6 @@ def main(listserv_file):
     if listserv:
         return listserv
 
-def get_json(fileName):
-    f = open(fileName, 'r');
-    tmpMsg = f.read()
-    return json.loads(tmpMsg)
-
-def get_csv(somefile):
-    """This should accept csv formatted data...I can't yet put a listserv into csv format, so it is kind of useless until that happens. """
-    #TODO once save as CSV is completed re work this function to correctly parse the data.
-    logger.warn("CSV data format is not yet supported... WTF are you uploading?")
-    dev = []
-    with open(somefile, 'rU') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            dev.append(row)
-    #return dev
 
 def get_site(site):
     """Connects to site and grabs list-serv files and passes them back"""

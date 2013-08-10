@@ -1,5 +1,7 @@
 import os
 import gzip
+import json
+
 
 from . import logger
 
@@ -58,3 +60,23 @@ def open_listserv(filename):
     #TODO Atually write this.
     #TODO This will require that list_struc.py is finished and a data structure is chosen.
     #TODO will be able to identify the file and use another function to open any csv or json formatted versions and save them as a compiled version.
+
+
+def get_json(fileName):
+    """ This function uploads a list-serv in json format. This is not implemented yet... soo WTF are you doing?"""
+    logger.warn("JSON data format is not yet supported")
+    f = open(fileName, 'r');
+    tmpMsg = f.read()
+    return json.loads(tmpMsg)
+
+def get_csv(somefile):
+    """This should accept csv formatted data...I can't yet put a listserv into csv format, so it is kind of useless until that happens. """
+    #TODO once save as CSV is completed re work this function to correctly parse the data and add tests in the test/util_tests function.
+    logger.warn("CSV data format is not yet supported... WTF are you uploading?")
+    dev = []
+    with open(somefile, 'rU') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            dev.append(row)
+    #return dev
+

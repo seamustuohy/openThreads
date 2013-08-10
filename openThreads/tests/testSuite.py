@@ -5,19 +5,20 @@ import unittest
 import os
 import sys
 
-
 #import top level of openThreads to run tests from
 sys.path.append(os.path.abspath('../..'))
 
 import openThreads
 
-
 #import tests from suites
 from openThreads.tests import email_io_tests
+from openThreads.tests import list_struc_test
+from openThreads.tests import util_tests
+
 
 def build_suite(suite_type):
     suite = unittest.TestSuite()
-    suite_types = {"all": [email_io_tests.testFunctions], "email_io":[email_io_tests.testFunctions]}
+    suite_types = {"all": [email_io_tests.testFunctions, util_tests.testFunctions, list_struc_test.testFunctions], "email_io":[email_io_tests.testFunctions]}
     for test_case in suite_types[suite_type]:
         suite.addTest (unittest.makeSuite(test_case))
     return suite
