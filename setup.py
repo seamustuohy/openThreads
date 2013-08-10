@@ -15,4 +15,4 @@ setup(name='openThreads',
       author='s2e',
       author_email='s2e@opentechinstitute.org',
       license='GPLV3',
-      packages=['OpenThreads'])
+      packages=['openThreads', 'openThreads.tests'])
