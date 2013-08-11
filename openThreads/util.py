@@ -2,7 +2,6 @@ import os
 import gzip
 import json
 
-
 from . import logger
 
 def create_if_necessary(directory):
@@ -27,7 +26,6 @@ def create_if_necessary(directory):
         else:
             logger.debug("Created directory.")
     return True
-
 
 def read_gzip(filename):
     """opens a gzip file and returns the plain text.
@@ -60,7 +58,6 @@ def open_listserv(filename):
     #TODO Atually write this.
     #TODO This will require that list_struc.py is finished and a data structure is chosen.
     #TODO will be able to identify the file and use another function to open any csv or json formatted versions and save them as a compiled version.
-
 
 def get_json(fileName):
     """ This function uploads a list-serv in json format. This is not implemented yet... soo WTF are you doing?"""

@@ -2,12 +2,14 @@ import unittest
 import sys
 import os
 import shutil
+import inspect
+import re
 
 from openThreads import util
 from openThreads import logger
 
 class testFunctions(unittest.TestCase):
-    
+
     def setUp(self):
         self.test_dir = "data/util/testDir"
         if os.path.isdir(self.test_dir):
@@ -32,6 +34,18 @@ class testFunctions(unittest.TestCase):
                 except OSError as ose:
                     log.error(ose + " I really hope you did not use a symbolic link...")
 
+    def test_all_tests(self):
+        functions = inspect.getmembers(util, inspect.isfunction)
+        tests = inspect.getmembers(testFunctions, inspect.ismethod)
+        test_suite = []
+        for i in tests:
+            if re.match("^test_(?!all_tests).*", i[0]):
+                test_suite.append(i[0])
+        function_list = []
+        for i in functions:
+            function_list.append("test_"+i[0])
+        self.assertItemsEqual(function_list, test_suite)
+
     def test_get_json(self):
         """Test that imported JSON  """
         sys.path.append("data/util")
@@ -44,7 +58,7 @@ class testFunctions(unittest.TestCase):
         self.assertEqual(single_json, {'item': 'content'})
         self.assertEqual(json_msg, json_msg_text)
 
-    def test_CIN(self):
+    def test_create_if_necessary(self):
         CINdir = self.test_dir + "/testCIN"
         dir_exist = os.path.isdir(CINdir)
         created = util.create_if_necessary(CINdir)
@@ -52,13 +66,13 @@ class testFunctions(unittest.TestCase):
         dir_exist = os.path.isdir(CINdir)
         self.assertTrue(dir_exist)
 
-    def test_gzip(self):
+    def test_read_gzip(self):
         gzip_file = "data/util/testFile.gz"
         file_text = "This is a test file.\nIt is zipped using gzip\n"
         read_text = util.read_gzip(gzip_file)
         self.assertEqual(file_text, read_text)
 
-    def test_if_file(self):
+    def test_is_file(self):
         self.assertTrue(util.is_file("data/util/testFile.gz"))
         self.assertFalse(util.is_file("data/util/DOOM"))
         
