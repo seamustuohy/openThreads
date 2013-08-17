@@ -11,6 +11,9 @@ from openThreads import logger
 class testFunctions(unittest.TestCase):
 
     def setUp(self):
+        self.unittest_name = testFunctions
+        self.module = util
+        self.module_class = False
         self.test_dir = "data/util/testDir"
         if os.path.isdir(self.test_dir):
             try:
@@ -35,26 +38,40 @@ class testFunctions(unittest.TestCase):
                     log.error(ose + " I really hope you did not use a symbolic link...")
 
     def test_all_tests(self):
-        functions = inspect.getmembers(util, inspect.isfunction)
-        tests = inspect.getmembers(testFunctions, inspect.ismethod)
+        function_list = []
         test_suite = []
+        if self.module_class != False:
+            class_functions = inspect.getmembers(self.module_class, inspect.ismethod)
+            #If Class Exists in module
+            for i in class_functions:
+                if re.match("^(?!__init__).*", i[0]):
+                    function_list.append("test_"+i[0])
+
+        functions = inspect.getmembers(self.module, inspect.isfunction)
+        tests = inspect.getmembers(self.unittest_name, inspect.ismethod)
+
+    #check for tests
         for i in tests:
             if re.match("^test_(?!all_tests).*", i[0]):
                 test_suite.append(i[0])
-        function_list = []
+        
+    #If functions in module
         for i in functions:
-            function_list.append("test_"+i[0])
+            if re.match("^(?!__init__).*", i[0]):
+                function_list.append("test_"+i[0])
+
         self.assertItemsEqual(function_list, test_suite)
 
     def test_get_json(self):
         """Test that imported JSON  """
-        sys.path.append("data/util")
+        sys.path.append("data/test_case")
         import testEmail
         #get the actual json dict from file
         json_msg_text = testEmail.test
-
+        #Get json from function
         single_json = util.get_json("data/util/single_json.json")
-        json_msg = util.get_json("data/util/testEmail.json")
+        json_msg = util.get_json("data/test_case/testEmail.json")
+        #TEST ALL THE THINGS!!
         self.assertEqual(single_json, {'item': 'content'})
         self.assertEqual(json_msg, json_msg_text)
 

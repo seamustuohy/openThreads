@@ -2,8 +2,9 @@ import archive_reader
 import re
 import os
 import httplib
-import csv
 import urllib2
+import inspect
+import json
 
 from . import logger
 from . import util
@@ -13,7 +14,6 @@ def main(listserv_file):
     listserv_types = {
         'plain_text': archive_reader.parse_archive,
         'json':util.get_json,
-        'CSV':util.get_csv,
         'site':get_site,
         }
     curr_type = check_type(listserv_file)
@@ -21,7 +21,6 @@ def main(listserv_file):
         listserv = listserv_types[curr_type](listserv_file)
     if listserv:
         return listserv
-
 
 def get_site(site):
     """Connects to site and grabs list-serv files and passes them back"""
@@ -41,19 +40,20 @@ def get_all_raw(path):
     text = []
     for i in ls:
         logger.info("Reading"+i)
-        filetype = re.findall(".*(txt$)|(gz$)", i)[0]
-        print(filetype)
-        if filetype[-1] == 'gz':
-            logger.info("file is a gzip file")
-            pt = util.read_gzip(path+i)
-        elif filetype[0] == 'txt':
-            logger.info("file is a plainText file")
-            if check_plain_text(path+i):
-                raw = open(path+i)
-                pt = raw.read()
+        if_filetype = re.findall(".*(txt$)|(gz$)", i)
+        if len(if_filetype) != 0:
+            filetype = if_filetype[0]
+            if filetype[-1] == 'gz':
+                logger.info("file is a gzip file")
+                pt = util.read_gzip(path+i)
+            elif filetype[0] == 'txt':
+                logger.info("file is a plainText file")
+                if check_plain_text(path+i):
+                    raw = open(path+i)
+                    pt = raw.read()
+            text.append(pt)
         else:
-            logger.error("File is corrupted or in an unfamiliar format.")
-        text.append(pt)
+            logger.error("File is corrupted, in an unfamiliar format, or an archive.")
     full_text = '\n'.join(text)
     f = open(path+"archiveFile", "w")
     f.write(full_text)
@@ -63,14 +63,14 @@ def get_all_raw(path):
 
 def save_list_file(site, files):
     directories = re.findall("^https?\://(.*)", site)
-    directory = str("listserv/"+directories[0])
+    cmd_folder = os.path.realpath(os.path.split(os.path.split(inspect.getfile( inspect.currentframe() ))[0])[0])
+    directory = str(cmd_folder+"/listserv/"+directories[0])
     util.create_if_necessary(directory)
     for i in files:
-        logger.info("proicessing"+i[0])
+        logger.info("processing"+i[0])
         f = open(directory+i[0], "w")
         dl = str(site)+str(i[0])
         page = urllib2.urlopen(dl).read()
-        print(page)
         f.write(page)
         f.close()
     return directory
@@ -79,7 +79,6 @@ def check_type(unknown):
     """Checks if the string passed to the function matches a folder, then a local file, and finally, a website address."""
     file_types = {
         'json':check_json,
-        'CSV':check_csv,
         }
     if util.is_file(unknown):
         for i in file_types:
@@ -108,16 +107,16 @@ def check_type(unknown):
 
 def check_plain_text(somefile):
     f = open(somefile, 'r');
-    tmpMsg = f.read()
-    #Here I just check for some simple header information. If the file is in a non csv or json format but does contain a listserv this will import it as if it is a plain-text dump... be warned!
     who = '\S*\sat\s\S*'
-    headerFront = '\nFrom\s' + who + '\s*'
-    if re.search(headerFront, tmpMsg):
-        return "plain_text"
-    else:
-        return False
+    headerFront = '^From\s' + who + '\s*'
+    for line in f:
+        if re.search(headerFront, line):
+            return "plain_text"
+        else:
+            return False
         
 def check_url_exist(site):
+    """site given must be without the protocol header (http://)"""
     logger.debug("checking url")
     components = re.findall("(.*?)(\/.*)", site)[0]
     print(components)
@@ -129,25 +128,10 @@ def check_url_exist(site):
     #TODO find out why so many of these pages return a 302 response?
     return response.status == 200 or response.status == 302
 
-def check_csv(somefile):
-    #TODO try to actually import a csv of a mailing list
-    csv_fileh = open(somefile, 'rb')
-    try:
-        dialect = csv.Sniffer().sniff(csv_fileh.read(1024))
-        csv_fileh.seek(0)
-        logger.debug("check_csv(): file is a csv")
-        return True
-    except csv.Error:
-        logger.debug("check_csv(): file is not a csv")
-        return False
-
 def check_json(somefile):
-    #TODO actually try this with json saved email list.
-    try:
-        json.loads(somefile)
-    except ValueError:
-        logger.debug("file is not json")
+    """This only checks that the extension is json|JSON"""
+    if re.match(".*[(?=\.json$)|(?=\.JSON$)]", somefile):
+        return True
+    else:
         return False
-    logger.debug("file is JSON")
-    return True
 

@@ -2,21 +2,35 @@ import re
 
 from . import logger
 
-
 def PGP(body):
     "Get PGP content from a message body if it exists. Return false if it does not."
-    beginPGP = '\-{5}[A-Z]{5} [A-Z]{3} [A-Z]{9}\-{5}\n'
-    endPGP = '\-{5}[A-Z]{3} [A-Z]{3} [A-Z]{9}\-{5}\n'
-    rePGP = beginPGP + '(.*?)' + endPGP
-    PGP = re.findall(rePGP, body, flags=re.DOTALL)
+
+    RFC4880_ASCII_OpenPGP_lines  = [
+        "PGP MESSAGE",
+        "PGP PUBLIC KEY BLOCK",
+        "PGP PRIVATE KEY BLOCK",
+        "PGP SIGNATURE",
+        "PGP MESSAGE, PART \d/\d",
+        "PGP MESSAGE, PART \d"
+        ]
+    dashes = "\-{5}"
+    PGP = []
+    for armor_line in RFC4880_ASCII_OpenPGP_lines:
+        if PGP == []:
+            beginPGP = dashes + "BEGIN " + armor_line + dashes + "\n"
+            endPGP = dashes + "END " + armor_line + dashes + "\n"
+            rePGP = beginPGP + '(.*?)' + endPGP            
+            PGP = re.findall(rePGP, body, flags=re.DOTALL)
     if PGP != []:
+        logger.debug("PGP Key FOUND!!!")
         return PGP
     else:
+        logger.debug("no PGP key found")
         return False
 
 def scrubbed(body):
     """When parsing from a plain_text listerv this function Returns true if an email is html formatted and false if an email was not"""
-    next_part = re.findall("-------------- next part --------------(.*)", body, flags=re.DOTALL)
+    next_part = re.findall("\-{14} next part \-{14}(.*)(?=From.*)?", body, flags=re.DOTALL)
     if next_part != []:
         return True
     else:

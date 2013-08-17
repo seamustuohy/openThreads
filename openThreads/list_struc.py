@@ -16,14 +16,35 @@ def get_it(message, ls):
 
 
 class list():
-    def __init__(message, listserv):
-        self.message = message
-        self.listserv = listserv
-        self.index = make_index(self.listserv)
+    def __init__(self, listserv=None, index=None):
+        """
+        @param listserv a listserv object that has been built from the archive_reader.
         
+        """
+        if listserv != None:
+            self.listserv = listserv
+        if index == None:
+            self.index = self.make_index(self.listserv)
+        else:
+            self.index = index
+
+    def get_msg_data(self, message):
+        """
+        TODO Add all msg_data functions to this controller function
+        """
+        msg_data = {}
+        if message['Message-ID'] not in self.index.keys():
+            self.index = add_to_index(message)
+        #TODO Add all msg_data functions below.
+        msg_data['parsed_body'] = get_parsed_body(message)
+        msg_data['other_thread_posts'] = get_user_thread_posts(message)
+        return msg_data      
             
-    def make_index(listserv):
-        #create a dictionary of each message indexed by keys
+    def make_index(self, listserv):
+        """create a dictionary of each message indexed by message ID
+        @param listserv SEE: class "list"'s param listserv
+        @return msg_dictionary a dict of messages indexed by message ID
+        """
         msg_dictionary = {}
         for i in listserv:
             if i['Message-ID'] in msg_dictionary.keys():
@@ -31,33 +52,25 @@ class list():
             msg_dictionary[i['Message-ID']] = i
         return msg_dictionary
     
-    def add_to_index(message, index):
-        """Takes a message and an existing index and returns an index with the message included. This     function does not check to see if the message is already in the index. As such, if a duplicate     message id exists it will overwrite that message.
+    def add_to_index(self, message):
+        """Takes a message and an existing index and returns an index with the message included. This function does not check to see if the message is already in the index. As such, if a duplicate message id exists it will overwrite that message.
+        @param message SEE: class "list"'s param message
+        @return index full index with message included. Make sure to apply to existing self.index variable.
         """
         logger.debug("adding message "+message['Message-ID']+" to index")
-        index[message['Message-ID']] = message
-        return index
-    
-    def get_msg_data(message, index):
-        msg_data = {}
-        if message['Message-ID'] not in index.keys():
-            index = add_to_index(message, index)
-        #TODO Add all msg_data functions below.
-        msg_data['parsed_body'] = get_parsed_body(message, index)
-        msg_data['other_thread_posts'] = get_user_thread_posts(message, index)
-    
-        return msg_data
-    
-    def split_body(message):
+        self.index[message['Message-ID']] = message    
+
+    def split_body(self, message):
         """ split the body of a message into its component parts
-        returns a dict with a section for PGP keys, if HTML exists, and content split by user.
+        returns a dict with a section for PGP keys, if HTML exists, and raw content.
+        @param message SEE: class "list"'s param message
         """
         parsed = {}
         body = message['Body']
         #Get PGP Keys if possible
         pgp = regular_expressions.PGP(body)
-        if pgp == []:
-            parsed['pgp'] = pgp[0]
+        if pgp != []:
+            parsed['PGP'] = pgp[0]
         #See's if the user uses an html client
         #TODO Make this compatable with non plain-text listservs
         if regular_expressions.scrubbed(body):
@@ -65,24 +78,33 @@ class list():
         #Gather seperated chunks of the message
         parsed['content'] = regular_expressions.message_components(body)
         return parsed
-    
-    def get_parsed_body(message, index):
-        """Takes a message and an index of previously parsed messages and returns a dict with a section     for PGP keys, if HTML exists, and content that includes the user name, original message,      length of section, section, and difference ratio between quoted text and referenced users     email (1 = exact, 0 = completely different)"""
-        parsed_body = split_body(message)
+        
+    def get_parsed_body(self, message):
+        """Takes a message and and returns a dict with a section for PGP keys, if HTML exists, and content that includes the user name, original message, length of section, section, and difference ratio between quoted text and referenced users email (1 = exact, 0 = completely different)
+
+        @param message
+        @return
+
+        @return message componenets = (USER NAME, MESSAGE ID, LENGTH, SECTION TEXT, PERCENT OF MATCH)
+        """
+        parsed_body = self.split_body(message)
         #get comtent origins of replys in order "parsed_body['content']"
         if "References" in message.keys():
             references = message['References']
             #logger.debug(str(parsed_body))
-            parsed_body = get_quote_body(parsed_body, references, index, message['Message-ID'])
+            parsed_body = self.get_quote_body(parsed_body, references, message['Message-ID'])
         else:
             #put body in format created for reference text
             #magic number 1.0 == 100% match between text and user text
             parsed_body['content'][0] = ('user', message['Message-ID'],     len(parsed_body['content'][0]),  parsed_body['content'][0], "1.0")
         return parsed_body
     
-    def get_quote_body(parsed_body, references, index, ID):
-        #logger.debug("get_quote_body started")
-        #logger.debug(str(parsed_body['content'][0]))
+    def get_quote_body(self, parsed_body, references, ID):
+        """
+        @return parsed_body['content'] componenets = (USER NAME, MESSAGE ID, LENGTH, SECTION TEXT, PERCENT OF MATCH)
+        """
+        #acceptable ratio of deviance for a modified quote to be attributed to an origin (.80 is a good fit found from test data that had html links scraped out)
+        diff_ratio = .80
         for i in parsed_body['content']:
             #logger.debug(str(parsed_body['content'][0]))
             chunk_index = parsed_body['content'].index(i)
@@ -94,20 +116,22 @@ class list():
                 #print(i)
                 plain = regular_expressions.un_quote(i)
                 #print(plain)
+                #print(self.index['<487BCB0B.8030005@cs.ucsc.edu>'])
                 for ref in references:
-                    if ref in index.keys():
-                        if plain in index[ref]['Body']:
-                            quote_origin = index[ref]['Name']
-                            ref_msg = index[ref]['Message-ID']
-                        #checking for similarity in case there was any editing of the text in the quote     itself.
-                        #This was mostly added because some html email clients will edit out html links     when they quote. This, by the way, sucks, and makes my life hard. So I don't like them. Not at all. I am using quick ratio because it is a nice in between from sloooooow ratio and sloopy real_quick_ratio
+                    if ref in self.index.keys():
+                        #print(self.index[ref]['Name'], ref)
+                        if plain in self.index[ref]['Body'] and ">"+plain not in self.index[ref]['Body']:
+                            quote_origin = self.index[ref]['Name']
+                            ref_msg = self.index[ref]['Message-ID']
+                        #checking for similarity in case there was any editing of the text in the quote itself.
+                        #This was mostly added because some html email clients will edit out html links when they quote. This, by the way, sucks, and makes my life hard. So I don't like them. Not at all. I am using quick ratio because it is a nice in between from sloooooow ratio and sloopy real_quick_ratio
                         else:
-                            ratio = difflib.SequenceMatcher(None, index[ref]['Body'], plain).quick_ratio()
-                            if ratio  >= .80:
-                                quote_origin = index[ref]['Name']
-                                ref_msg = index[ref]['Message-ID']
+                            ratio = difflib.SequenceMatcher(None, self.index[ref]['Body'], plain).quick_ratio()
+                            if ratio  >= diff_ratio:
+                                quote_origin = self.index[ref]['Name']
+                                ref_msg = self.index[ref]['Message-ID']
                 if quote_origin:
-                    if ratio:
+                    if ratio >= diff_ratio:
                         parsed_body['content'][chunk_index] = (quote_origin, ref_msg, len(i), plain, ratio)
                         ratio = False
                         ref_msg = False
@@ -120,7 +144,6 @@ class list():
                     #magic number == 0% match between text and known references
                     parsed_body['content'][chunk_index] = ("unknown", "unknown", len(i), plain, "0.0")
             else:
-                #print("YUP?")
                 #magic number == 100% match between text and user text
                 parsed_body['content'][chunk_index] = ('user', ID, len(i),  i, "1.0")
         return parsed_body
@@ -170,42 +193,3 @@ class list():
         #percentage of threads replied to since first post
         #usual time's messages are sent
     
-    
-"""
-Data Structure
-'Body': "HERE BE BODY TEXT"
-'day_number': '3'
-'Name': 'SomeCoder'
-'time': '12:11:02'
-'seconds': '02'
-'minute': '11'
-'hour': '12'
-'day_name': 'Wed'
-'month_name': 'Jul'
-'year': '2013'
-'zone': '-0700'
-'Address': 'somecoder@hersite.com'
-'References': [
-, '<SNT401-EAS37804FSED01FE4564955F91A0720@pfdshsx.gbl>',
-,'<51D29F32.2023335@wfesnd.nl>',
-'<51D3074E.1060200@nfet.inger.tum.de>',
-'<CAJVRA1QnCK_df5NfT9rUYNeD3Tq4vP-1PgiVYuEwVRaZj2+A@mail.gmail.com>',
-'<CACJAJ5-_Kg2ai+Uhz6CjF2ESA4u13w6nOP_b+j9YjvXNfVqGoRuw@mail.gmail.com>'
-]
-'referenced_reply_text':
-(quote, user, message)
-'In-Reply-To':('<CACJAJ5-_Kg2ai+Uh9ZzBz6Cju1fdsf34FDP_b+j9YjvXNfVqGoRuw@mail.gmail.com>',
-name,
-profile type,
-time between,
-quoted?,
-)
-'Message-ID': '<CAJVRA1Qu6QD-=ZPTo0vL6zLP+SbJO8S9SRk7RA=uWnHuaF02Nuw@mail.gmail.com>'
-'Subject': '[The List] Why we hate the world'}
-
-
-
-
-"""    
-
-

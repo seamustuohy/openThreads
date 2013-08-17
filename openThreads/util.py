@@ -64,16 +64,15 @@ def get_json(fileName):
     logger.warn("JSON data format is not yet supported")
     f = open(fileName, 'r');
     tmpMsg = f.read()
-    return json.loads(tmpMsg)
+    try:
+        data = json.loads(tmpMsg)
+        logger.debug("file is JSON")
+        return data
+    except ValueError:
+        logger.debug("file is not json")
+        return False
 
-def get_csv(somefile):
-    """This should accept csv formatted data...I can't yet put a listserv into csv format, so it is kind of useless until that happens. """
-    #TODO once save as CSV is completed re work this function to correctly parse the data and add tests in the test/util_tests function.
-    logger.warn("CSV data format is not yet supported... WTF are you uploading?")
-    dev = []
-    with open(somefile, 'rU') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            dev.append(row)
-    #return dev
-
+def save_json(fileName, data):
+        f = open(fileName + '.json', 'w');
+        f.write(json.dumps(data));
+        f.close()
