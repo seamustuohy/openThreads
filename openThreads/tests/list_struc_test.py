@@ -107,6 +107,7 @@ class testFunctions(unittest.TestCase):
 
         
     def test_get_parsed_body(self):
+        #TODO add better assertions about this test that pull from a list of users in a message.
         test_parse_body = self.test_list.get_parsed_body(self.new_msg)
         test_split_body = self.test_list.split_body(self.new_msg)
         #ensure no content lost
@@ -114,6 +115,7 @@ class testFunctions(unittest.TestCase):
         for i in test_parse_body:
             if i == 'content':
                 for n in test_parse_body[i]:
+                    logger.debug(str(n))
                     self.assertGreater(n[2],0)
                     if n[0] == 'unknown':
                         self.assertEqual(n[1],'unknown')
@@ -123,3 +125,24 @@ class testFunctions(unittest.TestCase):
                         self.assertNotEqual(n[1],'unknown')
                         self.assertEqual(n[4],"1.0")
                         self.assertEqual(n[2],len(n[3]))
+    
+    def test_get_quote_body(self):
+        """Tested through test_get_parsed_body """
+        pass
+
+        
+    def test_get_msg_data(self):
+        """Test message addition """
+        #TODO oh no, now I have to go and convert all the index functions to actually use the data structures i have created instead of a set of nested dictionaries. damn.
+        self.test_list.get_msg_data(self.new_msg)
+        for i in self.test_list.messages:
+            print(i)
+            n = type(self.test_list.messages[i])
+            if type(self.test_list.messages[i]) == n:
+                for k, v in vars(self.test_list.messages[i]).items():
+                    print k, v
+                    
+        pass
+
+    def test_get_response_length(self):
+        test_parse_body = self.test_list.get_parsed_body(self.new_msg)

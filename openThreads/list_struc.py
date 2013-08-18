@@ -27,19 +27,36 @@ class list():
             self.index = self.make_index(self.listserv)
         else:
             self.index = index
+        self.messages = {}
+        self.threads = {}
+
+    class message():
+        """The basic unit of storage for message analysis"""
+        def __init__(self):
+            pass
+        
+    class thread():
+        def __init__(self):
+            pass
 
     def get_msg_data(self, message):
         """
+        Adds a new message to an existing message struct
         TODO Add all msg_data functions to this controller function
         """
-        msg_data = {}
-        if message['Message-ID'] not in self.index.keys():
-            self.index = add_to_index(message)
+        if message['Message-ID'] not in self.messages:
+            self.messages[message['Message-ID']] = self.message()
+            for i in message:
+                setattr(self.messages[message['Message-ID']], i, message[i])
+#        if message['Message-ID'] not in self.index.keys():
+#            self.index = add_to_index(message)
         #TODO Add all msg_data functions below.
-        msg_data['parsed_body'] = get_parsed_body(message)
-        msg_data['other_thread_posts'] = get_user_thread_posts(message)
-        return msg_data      
-            
+        parsed_body = self.get_parsed_body(message)
+        for i in parsed_body:
+            setattr(self.messages[message['Message-ID']], i, parsed_body[i])
+        #self.messages[message['Message-ID']].other_thread_posts = self.get_user_thread_posts(message)
+
+        
     def make_index(self, listserv):
         """create a dictionary of each message indexed by message ID
         @param listserv SEE: class "list"'s param listserv
@@ -68,15 +85,18 @@ class list():
         parsed = {}
         body = message['Body']
         #Get PGP Keys if possible
-        pgp = regular_expressions.PGP(body)
+        pgp, body = regular_expressions.PGP(body, True)
         if pgp != []:
             parsed['PGP'] = pgp[0]
         #See's if the user uses an html client
         #TODO Make this compatable with non plain-text listservs
-        if regular_expressions.scrubbed(body):
+        scrub, body = regular_expressions.scrubbed(body, True)
+        if scrub:
             parsed['HTML'] = True
         #Gather seperated chunks of the message
         parsed['content'] = regular_expressions.message_components(body)
+        if body != message['Body']:
+            parsed['clean_body'] = body
         return parsed
         
     def get_parsed_body(self, message):
