@@ -57,6 +57,9 @@ def message_parser(raw_message):
                 for x in message_dict[i]:
                     message_dict[x] = message_dict[i][x]
                 del message_dict[i]
+    # Clean up bad header values (because pyhton does not like hypens)
+    message_dict['ID'] = message_dict.pop("Message-ID",None)
+    message_dict['Reply_To'] = message_dict.pop("In-Reply-To",None)
     return message_dict
 
 def parse_From(full_from_field):

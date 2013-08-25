@@ -24,8 +24,7 @@ class testFunctions(unittest.TestCase):
         self.new_msg = None
         
         self.testEmail = __import__("testEmail")
-        self.testEmailIndex = __import__("testEmailIndex")
-        #get the actual json dict from file
+        #get the actual list_serv from testEmail file
         list_serv = self.testEmail.test
         self.test_list = list_struc.list(listserv=list_serv)
         self.new_msg = {
@@ -46,8 +45,8 @@ class testFunctions(unittest.TestCase):
                 '<fd43sdc8f07e$9af3f4fdsfw30$@bcs@pumpkin.edu>'
                 ],
             'time': '10:10:34',
-            'In-Reply-To': '<a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>',
-            'Message-ID': '<K3dis83KLFE8DSFDlfd3$fdw@cs.nyu.edu>',
+            'Reply_To': '<a5ca47180807251726k34b5a5b5wda031814a3c36a4f@mail.gmail.com>',
+            'ID': '<K3dis83KLFE8DSFDlfd3$fdw@cs.nyu.edu>',
             'minute': '10',
             'Subject': '[email-list] Episode 2: A New Message'}
         
@@ -76,27 +75,6 @@ class testFunctions(unittest.TestCase):
 
         self.assertItemsEqual(function_list, test_suite)
 
-    def test_make_index(self):
-        #get the actual json dict from file
-        index = self.testEmailIndex.index
-        self.assertEqual(self.test_list.index, index)
-
-    def test_add_to_index(self):
-        #get the actual json dict from file
-        index = self.testEmailIndex.index
-        list_serv = self.testEmail.test
-        #get an random old message from listserv
-        existing_msg = self.testEmail.test[randrange(len(list_serv))]
-        new_msg = self.new_msg
-        test_list_new = list_struc.list(listserv=list_serv)        
-        self.test_list.add_to_index(existing_msg)
-        test_list_new.add_to_index(new_msg)
-
-        #check old messages dont update
-        self.assertEqual(self.test_list.index, index)
-        #check new messages are added
-        self.assertNotEqual(test_list_new.index, index)
-        self.assertEqual(test_list_new.index['<K3dis83KLFE8DSFDlfd3$fdw@cs.nyu.edu>'], new_msg)
 
     def test_split_body(self):
         test_split_body = self.test_list.split_body(self.new_msg)
@@ -115,7 +93,7 @@ class testFunctions(unittest.TestCase):
         for i in test_parse_body:
             if i == 'content':
                 for n in test_parse_body[i]:
-                    logger.debug(str(n))
+                    #logger.debug(str(n))
                     self.assertGreater(n[2],0)
                     if n[0] == 'unknown':
                         self.assertEqual(n[1],'unknown')
@@ -125,7 +103,26 @@ class testFunctions(unittest.TestCase):
                         self.assertNotEqual(n[1],'unknown')
                         self.assertEqual(n[4],"1.0")
                         self.assertEqual(n[2],len(n[3]))
-    
+        
+        #test old messages give similar data
+        #logger.debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        list_serv = self.testEmail.test
+        existing_msg = self.testEmail.test[randrange(len(list_serv))]
+        test_old_body = self.test_list.get_parsed_body(existing_msg)
+        for i in test_old_body:
+            if i == 'content':
+                for n in test_old_body[i]:
+                    #logger.debug(str(n))
+                    self.assertGreater(n[2],0)
+                    if n[0] == 'unknown':
+                        self.assertEqual(n[1],'unknown')
+                        self.assertEqual(n[4],"0.0")
+                        self.assertEqual(n[2],len(n[3]))
+                    if n[0] == 'user':
+                        self.assertNotEqual(n[1],'unknown')
+                        self.assertEqual(n[4],"1.0")
+                        self.assertEqual(n[2],len(n[3]))
+
     def test_get_quote_body(self):
         """Tested through test_get_parsed_body """
         pass
@@ -133,16 +130,47 @@ class testFunctions(unittest.TestCase):
         
     def test_get_msg_data(self):
         """Test message addition """
-        #TODO oh no, now I have to go and convert all the index functions to actually use the data structures i have created instead of a set of nested dictionaries. damn.
-        self.test_list.get_msg_data(self.new_msg)
-        for i in self.test_list.messages:
-            print(i)
-            n = type(self.test_list.messages[i])
-            if type(self.test_list.messages[i]) == n:
-                for k, v in vars(self.test_list.messages[i]).items():
-                    print k, v
-                    
-        pass
+        #TODO  convert all the index functions to actually use the data structures i have created instead of a set of nested dictionaries.
+        list_serv = self.testEmail.test
+        #get a random old message from the list
+        existing_msg = self.testEmail.test[randrange(len(list_serv))]
+        
+        test_list_static = list_struc.list(listserv=list_serv)
 
+        #ensure lists start equal
+        self.assertItemsEqual(self.test_list.messages, test_list_static.messages)
+
+        #Add the new message to the messages list
+        self.test_list.get_msg_data(self.new_msg)
+        
+        #Message was added to list-serv
+        self.assertIsNotNone(self.test_list.messages[self.new_msg['ID']])
+
+        #message had its body content parsed
+        #no message body content was not harmed in the making of this object.
+        new_content = self.test_list.messages[self.new_msg['ID']].__dict__
+        new_msg_items = ("Body", "day_number", "Name", "hour", "seconds", "year", "day_name",  "Reply_To", "month_name", "References", "time", "Address", "zone", "ID", "minute", "Subject")
+        for item in new_content:
+            if item in new_msg_items:
+                self.assertEqual(self.new_msg[item], new_content[item])
+            else:
+                self.assertIn(item, ("content", "HTML", "PGP", "clean_body"))
+
+        #test that adding existing adds parsed body contents to that old message
+        self.test_list.get_msg_data(existing_msg)
+        newer_content = self.test_list.messages[existing_msg['ID']].__dict__
+        for item in new_content:
+            if item in new_msg_items:
+                #Cannot test reference and in-reply-to for first posts.
+                if item != "Reply_To" or "References":
+                    self.assertEqual(existing_msg[item], newer_content[item])
+            else:
+                self.assertIn(item, ("content", "HTML", "PGP", "clean_body"))
+
+    
     def test_get_response_length(self):
         test_parse_body = self.test_list.get_parsed_body(self.new_msg)
+
+
+
+    #TODO Change "In-Reply-To" in all files to another string without hyphens possibly "In_Reply_To"

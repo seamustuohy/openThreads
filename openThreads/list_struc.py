@@ -1,5 +1,7 @@
 import re
 import difflib
+# https://github.com/caesar0301/pyTree
+from treelib import Node, Tree
 
 from . import logger
 from . import util
@@ -14,20 +16,21 @@ def get_it(message, ls):
     if util.is_file("compiled_lists/"+ls):
         data = util.open_listserv("compiled_lists/"+ls)
 
-
 class list():
-    def __init__(self, listserv=None, index=None):
+    def __init__(self, listserv=None, message_index=None, thread_index=None):
         """
         @param listserv a listserv object that has been built from the archive_reader.
         
         """
         if listserv != None:
             self.listserv = listserv
-        if index == None:
-            self.index = self.make_index(self.listserv)
+        if message_index == None:
+            #if not passed an index, but passed a list-serv create an index
+            self.messages = {}
+        #always take the listserv and check it against the index. If there is an index already then suppress warning, if not, then log all warnings.
         else:
-            self.index = index
-        self.messages = {}
+            self.messages = message_index
+        self.create_message_index(self.listserv)
         self.threads = {}
 
     class message():
@@ -37,46 +40,186 @@ class list():
         
     class thread():
         def __init__(self):
+            self.tree = thread_tree()
+
+        class msg(Node):
+            def add_user(user):
+                """Add a user ID to a message"""
+                self.user = user
+                
+        class thread_tree(Tree):
+            def create_node(self, tag, identifier=None, parent=None, user=None):
+                """
+                Create a child node for the node indicated by the 'parent' parameter
+                @param tag Useless little variable
+                @param identifier The message ID of the email
+                @param parent The message ID of the parent email
+                @param user TODO The user ID of the message sender (the hash given to a user_name email combo)
+                """
+                node = msg(tag, identifier)
+                node.add_user(user)
+                self.add_node(node, parent)
+                return node
+        
+        def add_message(self, message):
+            """Identifies where a message should be in a tree and adds the message to the tree accordingly."""
+            if "Reply_To" not in message.keys():
+                self.add_root(message)
+                return
+            else:
+                parent = message['Reply_To']
+            #check if Reply_To is in the thread_tree yet, if not go grab it and add it to the thread_tree. (note this is going to get recursive quick if done on the last node.)
+            if not self.tree.get_nodes[parent]:
+                if parent in list.messages:
+                    self.add_message(list.messages[parent])
+            self.tree.create_node(message['Subject'], message['ID'], parent, message['Name'])
+            return
+
+        def get_root(self):
+            """Returns the root node of the current tree structure"""
+            return thread_tree.root.
             pass
+
+        def get_node_location(self, ID):
+            """Returns a identifier for a nodes location within a tree in relation to the tree itself
+            TODO: figure out how to do this to create correlations between messages of similar types
+            """
+            pass
+
+        def list_children(self, ID):
+            """ Returns the list of all children of this node """
+            pass
+        
+        def get_decendants(self, ID):
+            """Returns the list of all children and all their children of the current node to all leaves."""
+            pass
+
+        def get_ancestors(self ID):
+            """ Returns the list of all ancestor nodes from current node to the current tree root."""
+            pass
+        
+        def add_child(self, parent, child):
+            """ Adds a new child node of the parent node."""
+            pass
+
+        def get_distance(self, origin, dest):
+            """Returns the closest distance between two nodes on the tree """
+            pass
+
+        def get_common_ancestor(self, origin, dest):
+            """Returns the first common ancestor between two nodes."""
+            pass
+
+        def get_farthest_node(self, ID):
+            """Returns the node's farthest decendant node and the distance to it. """
+            pass
+        
+        def get_leaves(self, ID):
+            """Returns the list of terminal nodes under this node"""
+            pass
+
+        def get_midpoint_outgroup(self):
+            """Returns the node that divides the current tree into two distance-balanced partitions."""
+            pass
+        
+        def get_partitions(self):
+            """It returns the set of all possible partitions under a node."""
+            pass
+        
+        def absorb_thread(self, thread):
+            """Check for overlaps between this tree and another thread, and add thread into this tree if compatable. For use when combining multiple parts of broken data sets."""
+            pass
+
 
     def get_msg_data(self, message):
         """
         Adds a new message to an existing message struct
         TODO Add all msg_data functions to this controller function
         """
-        if message['Message-ID'] not in self.messages:
-            self.messages[message['Message-ID']] = self.message()
+        if message['ID'] not in self.messages:
+            self.messages[message['ID']] = self.message()
             for i in message:
-                setattr(self.messages[message['Message-ID']], i, message[i])
-#        if message['Message-ID'] not in self.index.keys():
-#            self.index = add_to_index(message)
-        #TODO Add all msg_data functions below.
+                setattr(self.messages[message['ID']], i, message[i])
+        #The set of functions that are used to parse message context out.
         parsed_body = self.get_parsed_body(message)
-        for i in parsed_body:
-            setattr(self.messages[message['Message-ID']], i, parsed_body[i])
-        #self.messages[message['Message-ID']].other_thread_posts = self.get_user_thread_posts(message)
+        get_reply_length(message)
+        root = get_thread_root(message)
+        tree = get_thread_tree(message, root)
+        #need to define the structure for user activity
+        historic_user_activity = get_user_thread_history(message, tree)
+        location = get_message_node_location(message, tree)
+        direct_replies = get_direct_replies(message, tree)
+        decendants = get_descendants(message, tree)
+        siblings = get_siblings(message, tree)
+        get_response_time(message, tree)
+        get_user_response_time(message, tree)
+        get_quoted_text(message, tree)
+        get_gender(message)
+        get_thread_interaction_levels(message, thread)
+        ###Get length of text in response to each quote (if top or bottom post then length applies to all text in quoted messages)
+    def get_reply_length():
+        pass
+        get_thread_root(message)
+        get_thread_tree(message, root)
+        ##check if user exists in thread before this message
+        get_user_thread_history(message, tree)
+        ##Check number of thread splits before & after this message
+        get_message_node_location(message, tree)
+        ##Check number of replies directly to this message
+        get_direct_replies(message, tree)
+        ##check number of refrences spawned by message
+        get_descendants(message, tree)
+        ##check number of emails reply-to this messages parent
+        get_siblings(message, tree)
+        ##Check time between this message and all responses (will need a relitive time for users of those messages as well once users are run.)
+        get_response_time(message, tree)
+        #TODO create a structure for tagging user nodes with info that they need to update once all there messages have been updated, or are updated in the future. That way old data will be contantly updated to show things such as if the message was replied to in their usual message response period for that list.
+        ##check time between this message and parent as well as user relitive time, once user is fully computed
+        get_user_response_time(message, tree)
+        ##see if anyone quoted replies, and if they quote message (this is another area where it will have to see if all messages on the tree have been run, and if they have it will ping them for quoted text. If they have not yet run it will mark as a task to run once those are completed and have them run once they have finished.)
+        get_quoted_text(message, tree)
+            ##length of message
+            ##deviation +/- of length from average length of messages by user of similar type
+            ##Salutation vs. salutationless
+            ##signed message (can use signatures across messages to identify unique individuals who are on multiple listservs)
+            ##check is parent replies
+            get_parent_response(message, tree)
+        #Check gender of sender against multiple data sets
+        get_gender(message)
+        #number of interactions with users in this thread and distance from message sender (quoted = 1 [if quoted without other replies that are closer in distance to the user], reply-to=1, other=message     distance from user)
+        get_thread_interaction_levels(message, thread)
+        #check number of replies to threads started by thread root message sender
+        #deviation +/- of time posted from normal message posting times
+        #if in proper message format see if there is a cc'ed line and see if they responded in the thread
+        #What key terms are contained in the quoted text that are also in an indiduals response.
+        #
 
         
-    def make_index(self, listserv):
+        
+        for i in parsed_body:
+            setattr(self.messages[message['ID']], i, parsed_body[i])
+
+            
+    def create_message_index(self, listserv):
         """create a dictionary of each message indexed by message ID
         @param listserv SEE: class "list"'s param listserv
         @return msg_dictionary a dict of messages indexed by message ID
         """
+        if self.messages != {}:
+            existing_index = True
         msg_dictionary = {}
-        for i in listserv:
-            if i['Message-ID'] in msg_dictionary.keys():
-                logger.error("Duplace message ID detected in list-serv: "+i["Subject"])
-            msg_dictionary[i['Message-ID']] = i
-        return msg_dictionary
-    
-    def add_to_index(self, message):
-        """Takes a message and an existing index and returns an index with the message included. This function does not check to see if the message is already in the index. As such, if a duplicate message id exists it will overwrite that message.
-        @param message SEE: class "list"'s param message
-        @return index full index with message included. Make sure to apply to existing self.index variable.
-        """
-        logger.debug("adding message "+message['Message-ID']+" to index")
-        self.index[message['Message-ID']] = message    
+        for message in listserv:
+            if message['ID'] not in self.messages:
+                self.messages[message['ID']] = self.message()
+                for i in message:
+                    setattr(self.messages[message['ID']], i, message[i])
+            else:
+                if existing_index == True:
+                    logger.debug("Duplace message ID detected in list-serv: "+message['ID']+" found with subject "+message["Subject"])
+                else:
+                    logger.warn("Duplace message ID detected in list-serv: "+message['ID']+" found with subject "+message["Subject"])
 
+    
     def split_body(self, message):
         """ split the body of a message into its component parts
         returns a dict with a section for PGP keys, if HTML exists, and raw content.
@@ -86,7 +229,7 @@ class list():
         body = message['Body']
         #Get PGP Keys if possible
         pgp, body = regular_expressions.PGP(body, True)
-        if pgp != []:
+        if pgp != False and pgp != []:
             parsed['PGP'] = pgp[0]
         #See's if the user uses an html client
         #TODO Make this compatable with non plain-text listservs
@@ -112,11 +255,11 @@ class list():
         if "References" in message.keys():
             references = message['References']
             #logger.debug(str(parsed_body))
-            parsed_body = self.get_quote_body(parsed_body, references, message['Message-ID'])
+            parsed_body = self.get_quote_body(parsed_body, references, message['ID'])
         else:
             #put body in format created for reference text
             #magic number 1.0 == 100% match between text and user text
-            parsed_body['content'][0] = ('user', message['Message-ID'],     len(parsed_body['content'][0]),  parsed_body['content'][0], "1.0")
+            parsed_body['content'][0] = ('user', message['ID'],     len(parsed_body['content'][0]),  parsed_body['content'][0], "1.0")
         return parsed_body
     
     def get_quote_body(self, parsed_body, references, ID):
@@ -131,34 +274,17 @@ class list():
             #logger.debug(str(parsed_body['content'][0]))
             #if a quoted chunk
             if re.match(">", i):
-                quote_origin = False
-                ref_msg = False
-                #print(i)
                 plain = regular_expressions.un_quote(i)
-                #print(plain)
-                #print(self.index['<487BCB0B.8030005@cs.ucsc.edu>'])
-                for ref in references:
-                    if ref in self.index.keys():
-                        #print(self.index[ref]['Name'], ref)
-                        if plain in self.index[ref]['Body'] and ">"+plain not in self.index[ref]['Body']:
-                            quote_origin = self.index[ref]['Name']
-                            ref_msg = self.index[ref]['Message-ID']
-                        #checking for similarity in case there was any editing of the text in the quote itself.
-                        #This was mostly added because some html email clients will edit out html links when they quote. This, by the way, sucks, and makes my life hard. So I don't like them. Not at all. I am using quick ratio because it is a nice in between from sloooooow ratio and sloopy real_quick_ratio
-                        else:
-                            ratio = difflib.SequenceMatcher(None, self.index[ref]['Body'], plain).quick_ratio()
-                            if ratio  >= diff_ratio:
-                                quote_origin = self.index[ref]['Name']
-                                ref_msg = self.index[ref]['Message-ID']
-                if quote_origin:
+                quote_origin, ref_msg, ratio = self.get_quote_origin(plain, references, diff_ratio)
+                if quote_origin != False:
                     if ratio >= diff_ratio:
                         parsed_body['content'][chunk_index] = (quote_origin, ref_msg, len(i), plain, ratio)
                         ratio = False
                         ref_msg = False
                     else:
-                        #magic number == 100% match between text and known reference
-                        parsed_body['content'][chunk_index] = (quote_origin, ref_msg, len(i), plain, "1.0")
-                        ref_msg = False
+                        logger.error(str(ratio))
+                        logger.error("This is bad... You should never get here. Somehow you have been passed an quote origin as well as a ratio that is too small. No one will ever see this message. But, if you do... well, I blame you.")
+                        pass
                 else:
                     logger.error("Quoted text not found")
                     #magic number == 0% match between text and known references
@@ -167,8 +293,32 @@ class list():
                 #magic number == 100% match between text and user text
                 parsed_body['content'][chunk_index] = ('user', ID, len(i),  i, "1.0")
         return parsed_body
-    
+
+    def get_quote_origin(self, plain, references, diff_ratio):
+        quote_origin = False
+        ref_msg = False
+        ratio = 0
+        for ref in references:
+            if ref in self.messages.keys():
+                        #print(self.index[ref]['Name'], ref)
+                if plain in self.messages[ref].Body and ">"+plain not in self.messages[ref].Body:
+                    quote_origin = self.messages[ref].Name
+                    ref_msg = self.messages[ref].ID
+                    ratio = 1
+                    return quote_origin, ref_msg, ratio
+                else:
+                    ratio = difflib.SequenceMatcher(None, self.messages[ref].Body, plain).quick_ratio()
+                    if ratio  >= diff_ratio:
+                        quote_origin = self.messages[ref].Name
+                        ref_msg = self.messages[ref].ID
+                        return quote_origin, ref_msg, ratio
+        return quote_origin, ref_msg, ratio
+
+
         #TODO Each of the following need to use parsed_body in get_msg_data to create a secondary structure that includes parsed body.
+
+    def get_reply_length():
+        pass
         ###Get length of text in response to each quote (if top or bottom post then length applies to all text in quoted messages)
         ##check if user exists in thread before this message
         ##Check number of thread splits before & after this message

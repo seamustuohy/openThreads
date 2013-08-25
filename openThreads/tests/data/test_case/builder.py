@@ -25,9 +25,9 @@ def build_test_case_files():
     util.save_json(cur+"/testEmail", email)
 
     test_list = list_struc.list(listserv=email)
-    index = open(cur+"/testEmailIndex.py", "w")
-    index.write("index = "+str(test_list.index))
-    index.close()
+    #index = open(cur+"/testEmailIndex.py", "w")
+    #index.write("index = "+str(test_list.index))
+    #index.close()
 
 
 if __name__ == "__main__":
