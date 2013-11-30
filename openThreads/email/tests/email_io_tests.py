@@ -5,7 +5,7 @@ import re
 import openThreads
 import os
 
-from openThreads import email_io
+from openThreads.email import email_io
 
 class testFunctions(unittest.TestCase):
 

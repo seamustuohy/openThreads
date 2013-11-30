@@ -1,6 +1,7 @@
 import re
 
-from . import logger
+from openThreads import logger
+
 
 def PGP(body, scrape=None):
     """Get PGP content from a message body if it exists. Return false if it does not. If scrape, then return the body text scraped of PGP key as well

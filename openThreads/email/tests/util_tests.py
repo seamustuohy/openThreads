@@ -5,7 +5,7 @@ import shutil
 import inspect
 import re
 
-from openThreads import util
+from openThreads.email import util
 from openThreads import logger
 
 class testFunctions(unittest.TestCase):

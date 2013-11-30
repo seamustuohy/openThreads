@@ -8,3 +8,5 @@ parsables/
 .DS_Store
 visualizations/data
 docs/
+.coverage
+*,cover

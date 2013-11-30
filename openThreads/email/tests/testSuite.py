@@ -6,15 +6,15 @@ import os
 import sys
 
 #import top level of openThreads to run tests from
-sys.path.append(os.path.abspath('../..'))
+sys.path.append(os.path.abspath('../../..'))
 
 import openThreads
 
 #import tests from suites
-from openThreads.tests import email_io_tests
-from openThreads.tests import list_struc_test
-from openThreads.tests import util_tests
-from openThreads.tests import net_tests
+from openThreads.email.tests import email_io_tests
+from openThreads.email.tests import list_struc_test
+from openThreads.email.tests import util_tests
+from openThreads.email.tests import net_tests
 
 
 def build_suite(suite_type, net_test):

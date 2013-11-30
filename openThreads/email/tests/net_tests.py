@@ -4,7 +4,7 @@ import os
 import inspect
 import openThreads
 
-from openThreads import email_io
+from openThreads.email import email_io
 
 class testFunctions(unittest.TestCase):
 

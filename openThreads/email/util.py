@@ -2,7 +2,9 @@ import os
 import gzip
 import json
 
-from . import logger
+import openThreads
+
+from openThreads import logger
 
 def create_if_necessary(directory):
     """Create the specified directory, if necessary. Stolen from https://github.com/isislovecruft/python-gnupg/blob/master/gnupg/_util.py

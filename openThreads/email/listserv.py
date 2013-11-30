@@ -1,9 +1,10 @@
 import re
 import difflib
-# https://github.com/caesar0301/pyTree
-from treelib import Node, Tree
+import random
+import string
+import openThreads
 
-from . import logger
+from openThreads import logger
 from . import util
 from . import regular_expressions
 #===TERMS===:
@@ -11,7 +12,10 @@ from . import regular_expressions
 ##?????? :The number of back-and-forth interactions past the initial reply. a(0)<-b(0)<-a(1)<-b(2)
 
 def get_it(message, ls):
-    """TODO: Using this function to allow me to grab data currently. Will need to be replaced with a more logical function set later. """
+    """TODO: Using this function to allow me to grab data currently. Will need to be replaced with a more logical function set later.
+    :param message:
+    :param ls: plain text dump from a listserv
+    """
             #Grab plain-test listserv
     if util.is_file("compiled_lists/"+ls):
         data = util.open_listserv("compiled_lists/"+ls)
@@ -19,8 +23,8 @@ def get_it(message, ls):
 class list():
     def __init__(self, listserv=None, message_index=None, thread_index=None, users_index=None):
         """
-        @param listserv a listserv object that has been built from the archive_reader.
-        
+        :param listserv: a listserv object that has been built from the archive_reader.
+                
         """
         if listserv != None:
             self.listserv = listserv
@@ -44,25 +48,36 @@ class list():
         def __init__(self):
             pass
         
-    def create_user(self, message):
-        uuid = ''.join(random.choice(string.ascii_letters + string.digits) for x in range(42))
-        self.threads[uuid] = self.thread(uuid)
-        self.threads[uuid].add_message(message)
-        return uuid
+    def get_uid(self, typeof):
+        """
+        Unique thread ID creator.
+        :param typeof: The name of the dictionary the uid will be used in to ensure uniqueness
+        :type typeof: string
+        :returns: unique thread identifier
+        :return type: string
+        """
+        uid = ''.join(random.choice(string.ascii_letters + string.digits) for x in range(42))
+        #lets make sure we don't think pseudo-random == unique and check before overwriting a thread
+        while uid in getattr(self, typeof).keys():
+            uid = ''.join(random.choice(string.ascii_letters + string.digits) for x in range(42))
+        return uid
+    
     
     def create_thread(self, message):
-        uuid = ''.join(random.choice(string.ascii_letters + string.digits) for x in range(42))
-        #lets make sure we don't think pseudo-random == unique and check before overwriting a thread
-        while uuid in self.threads.keys():
-            uuid = ''.join(random.choice(string.ascii_letters + string.digits) for x in range(42))
+        """
+        Creates a new thread and adds it to the threads dict.
+        :param message: A parsed message that creates a thread
+        :returns: New Threads unique ID
+        """
+        utid = self.get_uid("threads")
         #create thread and add to threads
-        self.threads[uuid] = self.thread(uuid)
+        self.threads[utid] = self.thread(utid)
         #try to add a message to the thread
-        if self.threads[uuid].add_root(message['Subject'], message['ID'], message['Name']) == True:
-            return uuid
+        if self.threads[utid].add_root(message.Subject, message.ID, message.Name) == True:
+            return utid
         else:
             #If we can't successfully create the thread we should delete it. 
-            del(self.threads[uuid])
+            del(self.threads[utid])
             return False
 
     def get_thread(self, message):
@@ -82,8 +97,8 @@ class list():
             return message['ID']
 
     def find_msg_root(self, message):
-        if "Reply_To" in message.keys():
-            parent = message['Reply_To']
+        parent = getattr(message, "Reply_To", None)
+        if parent != None:
             return self.find_msg_root(self.messages[parent])
         else:
             return message['ID']
@@ -100,108 +115,11 @@ class list():
                 self.add_message(thread, self.messages[parent])
         else:
             return
-    
-    class thread():
-        def __init__(self, uuid):
-            import string
-            import random
-            self.tree = thread_tree()
-            self.uuid = uuid
-        
-        class msg(Node):
-            def add_user(user):
-                """Add a user ID to a message"""
-                self.user = user
-                
-        class thread_tree(Tree):
-            def create_node(self, tag, identifier=None, parent=None, user=None):
-                """
-                Create a child node for the node indicated by the 'parent' parameter
-                @param tag Useless little variable
-                @param identifier The message ID of the email
-                @param parent The message ID of the parent email
-                @param user TODO The user ID of the message sender (the hash given to a user_name email combo)
-                """
-                node = msg(tag, identifier)
-                node.add_user(user)
-                self.add_node(node, parent)
-                return node
-        
-        def add_root(self, subject, ID, user_name):
-            """Creates a root node if one does not already exist.
-            This means you have to be really sure you found the origin node before you go creating a thread-tree or it is going to error out on you.
-            TODO: Find out if anyone ever adds references from another tree in their headers. This will impact the absorb thread function which is built for this type of multi-thread scenerio."""
-            
-            if self.tree.root then:
-                return False
-            else:
-                self.add_node(subject, ID, parent=None, user_name)
-                return True
-        
-        def add_node(self, subject, ID, parent, user_name):
-            #TODO add some samitization and return values for bad data sent to this if root already exists 
-            self.tree.create_node(subject, ID, parent, user_name)
-
-        def get_root(self):
-            """Returns the root node of the current tree structure"""
-            return thread_tree.root
-            pass
-
-        def get_node_location(self, ID):
-            """Returns a identifier for a nodes location within a tree in relation to the tree itself
-            TODO: figure out how to do this to create correlations between messages of similar types
-            """
-            pass
-
-        def list_children(self, ID):
-            """ Returns the list of all children of this node """
-            pass
-        
-        def get_decendants(self, ID):
-            """Returns the list of all children and all their children of the current node to all leaves."""
-            pass
-
-        def get_ancestors(self, ID):
-            """ Returns the list of all ancestor nodes from current node to the current tree root."""
-            pass
-        
-        def add_child(self, parent, child):
-            """ Adds a new child node of the parent node."""
-            pass
-
-        def get_distance(self, origin, dest):
-            """Returns the closest distance between two nodes on the tree """
-            pass
-
-        def get_common_ancestor(self, origin, dest):
-            """Returns the first common ancestor between two nodes."""
-            pass
-
-        def get_farthest_node(self, ID):
-            """Returns the node's farthest decendant node and the distance to it. """
-            pass
-        
-        def get_leaves(self, ID):
-            """Returns the list of terminal nodes under this node"""
-            pass
-
-        def get_midpoint_outgroup(self):
-            """Returns the node that divides the current tree into two distance-balanced partitions."""
-            pass
-        
-        def get_partitions(self):
-            """It returns the set of all possible partitions under a node."""
-            pass
-        
-        def absorb_thread(self, thread):
-            """Check for overlaps between this tree and another thread, and add thread into this tree if compatable. For use when combining multiple parts of broken data sets."""
-            pass
-        
-        def contains(self, ID):
-            """Check to see if a node is in this thread.
-            @return bool True if node in thread, false if node is not in thread."""
-            pass
-
+          
+    class msg(Node):
+        def add_user(user):
+            """Add a user ID to a message"""
+            self.user = user
 
     def get_msg_data(self, message):
         """
@@ -215,9 +133,9 @@ class list():
         #The set of functions that are used to parse message context out.
         parsed_body = self.get_parsed_body(message)
         #TODO START CODING HERE!!!!!!!!!!
-        user = get_user(message)
-        get_reply_length(message)
-        thread_ID = get_thread(message)
+        thread_ID = self.get_thread(message)
+        user = self.get_user(message)
+        self.get_reply_length(message)
         #After get_thread is called you only need to pass the ID of the message to thread calls, not the whole message
         ID = message['ID']
         #need to define the structure for user activity
@@ -235,6 +153,7 @@ class list():
         ###Get length of text in response to each quote (if top or bottom post then length applies to all text in quoted messages)
         #Go to the user lists and find the most accurate user. This needs to take all messages into account to try and break apart users with the same name, but whom are different, as well as the same user with various names listed in the header info. This is going to be hard-ish 
         get_user(message)
+        
     def get_reply_length():
         pass
         get_thread_root(message)

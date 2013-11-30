@@ -5,8 +5,9 @@ import httplib
 import urllib2
 import inspect
 import json
+import openThreads
 
-from . import logger
+from openThreads import logger
 from . import util
 
 def main(listserv_file):

@@ -5,7 +5,7 @@ import re
 from random import randrange
 
 
-from openThreads import list_struc
+from openThreads.email import list_struc
 from openThreads import logger
 
 class testFunctions(unittest.TestCase):
