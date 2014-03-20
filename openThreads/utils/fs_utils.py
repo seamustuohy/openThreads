@@ -39,9 +39,19 @@ def read_gzip(filename):
     finally:
             input_file.close()
     return plain_text
-    
+
+def walklevel(some_dir, level=1):
+    some_dir = some_dir.rstrip(os.path.sep)
+    assert os.path.isdir(some_dir)
+    num_sep = some_dir.count(os.path.sep)
+    for root, dirs, files in os.walk(some_dir):
+        yield root, dirs, files
+        num_sep_this = root.count(os.path.sep)
+        if num_sep + level <= num_sep_this:
+            del dirs[:]
+
 def is_file(unknown):
-    """Determines if a file is accessable, and contains actual data. It does NOT check to see if the file contains any data. """
+    """Determines if a file is accessable. It does NOT check to see if the file contains any data. """
 #stolen from https://github.com/isislovecruft/python-gnupg/blob/master/gnupg/_util.py
     try:
         assert os.lstat(unknown).st_size > 0, "not a file: %s" % unknown
@@ -55,6 +65,12 @@ def is_file(unknown):
         logger.warn("is_file():You do not have permission to access that file")
         return False
 
+def get_file_abs(obj):
+    if is_file(obj):
+        return os.path.abspath(obj)
+    else:
+        return False
+    
 def open_listserv(filename):
     pass
     #TODO Atually write this.
