@@ -1,5 +1,6 @@
 ## OpenThreads: Visualizing Open Communications 
-### DISCONTINUED
+
+**NOTE: This project has been DISCONTINUED. Feel free to contact the author if you have questions about the codebase or original project.**
 
 OpenThreads was a program for analysis and visualization of mailing lists. The tools included here make it possible to parse the conversations from pipermail and mailman lists into participants, messages, and threads for visualization and analysis. Our goal was to create an open platform that everyone can use to analyze their communities, with a goal of provoking conversation around how open our communities are and how to continue to improve upon the quality and diversity of that openness.
 
