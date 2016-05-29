@@ -14,7 +14,7 @@ As members of open source communities ourselves, we have seen and heard of insta
 
 ## How to use OpenThreads
 
-[Basic Instructions for stable version](wiki/instructions)
+[Basic Instructions for stable version](https://github.com/elationfoundation/openThreads/wiki/instructions)
 
 ## Presentations
 
@@ -28,14 +28,14 @@ www.slideshare.net/apw217/foss4g-naopenthreadsfinal/69
 ## Research Notes
 Some of the research notes from the study...
 
-* [Facts and Quotes](wiki/Facts-Quotes)
-* [Initial Research Questions](wiki/Initial-Questions)
-* [Data Metrics](wiki/DataMetrics)
-* [Readings](wiki/Resources)
-* [Visualization](wiki/Visualization)
+* [Facts and Quotes](https://github.com/elationfoundation/openThreads/wiki/Facts-Quotes)
+* [Initial Research Questions](https://github.com/elationfoundation/openThreads/wiki/Initial-Questions)
+* [Data Metrics](https://github.com/elationfoundation/openThreads/wiki/DataMetrics)
+* [Readings](https://github.com/elationfoundation/openThreads/wiki/Resources)
+* [Visualization](https://github.com/elationfoundation/openThreads/wiki/Visualization)
 
 ## Coding Open Threads
-* [Coding Open Threads - Part One: RegEx](wiki/A-journey-in-Regular-Expressions-and-ListServ's)
+* [Coding Open Threads - Part One: RegEx](https://github.com/elationfoundation/openThreads/wiki/A-journey-in-Regular-Expressions-and-ListServ%27s)
 
 ### Links that might be useful
 * [Google Groups Parsing](http://saturnboy.com/2010/03/scraping-google-groups/)
